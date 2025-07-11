@@ -8,6 +8,8 @@ router.post('/register', async (req, res) => {
   console.log('Register request body:', req.body);
   const { name, phone, aadhaar, language, password } = req.body;
   if (!phone || !aadhaar || !password) return res.status(400).json({ error: 'Phone, Aadhaar, and password required' });
+  if (!/^\d{10}$/.test(phone)) return res.status(400).json({ error: 'Phone number must be 10 digits' });
+  if (!/^\d{12}$/.test(aadhaar)) return res.status(400).json({ error: 'Aadhaar number must be 12 digits' });
   try {
     let user = await User.findOne({ phone });
     if (user) return res.status(400).json({ error: 'User already exists' });
