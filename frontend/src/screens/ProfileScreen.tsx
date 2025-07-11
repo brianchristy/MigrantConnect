@@ -60,21 +60,25 @@ export default function ProfileScreen({ route, navigation }: any) {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'] });
     if (result.canceled) return;
     setAadhaarFile(result.assets[0]);
+    return result.assets[0];
   };
   const pickPanFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'] });
     if (result.canceled) return;
     setPanFile(result.assets[0]);
+    return result.assets[0];
   };
   const pickRationFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'] });
     if (result.canceled) return;
     setRationFile(result.assets[0]);
+    return result.assets[0];
   };
   const pickEmploymentHistoryFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'] });
     if (result.canceled) return;
     setEmploymentHistoryFile(result.assets[0]);
+    return result.assets[0];
   };
 
   // Document submission
@@ -139,10 +143,44 @@ export default function ProfileScreen({ route, navigation }: any) {
         });
       }
       Alert.alert('Success', 'Documents uploaded successfully!');
+      clearFileSelections(); // Clear selections after upload
       fetchDocuments(); // Refresh uploaded docs
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.error || 'Document upload failed');
     }
+  };
+
+  // Add delete document handler
+  const handleDeleteDocument = async (docId: string) => {
+    try {
+      await axios.delete(`${process.env.API_BASE_URL}/api/documents/${docId}`);
+      Alert.alert('Success', 'Document deleted');
+      // Clear file selections
+      setAadhaarFile(null);
+      setPanFile(null);
+      setRationFile(null);
+      setEmploymentHistoryFile(null);
+      setAadhaarNumber('');
+      setPanNumber('');
+      setRationNumber('');
+      fetchDocuments();
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.error || 'Failed to delete document');
+    }
+  };
+
+  // Helper to get uploaded doc by type
+  const getUploadedDoc = (type: string) => uploadedDocs.find(doc => doc.type === type);
+
+  // Clear file selections after upload
+  const clearFileSelections = () => {
+    setAadhaarFile(null);
+    setPanFile(null);
+    setRationFile(null);
+    setEmploymentHistoryFile(null);
+    setAadhaarNumber('');
+    setPanNumber('');
+    setRationNumber('');
   };
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
@@ -157,20 +195,59 @@ export default function ProfileScreen({ route, navigation }: any) {
       <View style={{ marginTop: 30 }}>
         <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Add Documents</Text>
         {/* Aadhaar */}
-        <Text style={{ marginTop: 10 }}>Aadhaar Number</Text>
-        <TextInput value={aadhaarNumber} onChangeText={setAadhaarNumber} keyboardType="number-pad" style={{ borderWidth: 1, marginBottom: 5 }} />
-        <Button title={aadhaarFile ? `Selected: ${aadhaarFile.name}` : 'Upload Aadhaar File'} onPress={pickAadhaarFile} />
+        {getUploadedDoc('aadhaar') ? (
+          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
+            <Text>Aadhaar Number: {getUploadedDoc('aadhaar').number || '-'}</Text>
+            <Text>File: {getUploadedDoc('aadhaar').fileName}</Text>
+            <Button title="Delete Aadhaar" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('aadhaar')._id)} />
+          </View>
+        ) : (
+          <View>
+            <Text style={{ marginTop: 10 }}>Aadhaar Number</Text>
+            <TextInput value={aadhaarNumber} onChangeText={setAadhaarNumber} keyboardType="number-pad" style={{ borderWidth: 1, marginBottom: 5 }} />
+            <Button title={aadhaarFile ? `Selected: ${aadhaarFile.name}` : 'Upload Aadhaar File'} onPress={pickAadhaarFile} />
+          </View>
+        )}
         {/* PAN */}
-        <Text style={{ marginTop: 15 }}>PAN Number</Text>
-        <TextInput value={panNumber} onChangeText={setPanNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
-        <Button title={panFile ? `Selected: ${panFile.name}` : 'Upload PAN File'} onPress={pickPanFile} />
+        {getUploadedDoc('pan') ? (
+          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
+            <Text>PAN Number: {getUploadedDoc('pan').number || '-'}</Text>
+            <Text>File: {getUploadedDoc('pan').fileName}</Text>
+            <Button title="Delete PAN" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('pan')._id)} />
+          </View>
+        ) : (
+          <View>
+            <Text style={{ marginTop: 15 }}>PAN Number</Text>
+            <TextInput value={panNumber} onChangeText={setPanNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
+            <Button title={panFile ? `Selected: ${panFile.name}` : 'Upload PAN File'} onPress={pickPanFile} />
+          </View>
+        )}
         {/* Ration Card */}
-        <Text style={{ marginTop: 15 }}>Ration Card Number</Text>
-        <TextInput value={rationNumber} onChangeText={setRationNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
-        <Button title={rationFile ? `Selected: ${rationFile.name}` : 'Upload Ration Card File'} onPress={pickRationFile} />
+        {getUploadedDoc('ration') ? (
+          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
+            <Text>Ration Card Number: {getUploadedDoc('ration').number || '-'}</Text>
+            <Text>File: {getUploadedDoc('ration').fileName}</Text>
+            <Button title="Delete Ration Card" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('ration')._id)} />
+          </View>
+        ) : (
+          <View>
+            <Text style={{ marginTop: 15 }}>Ration Card Number</Text>
+            <TextInput value={rationNumber} onChangeText={setRationNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
+            <Button title={rationFile ? `Selected: ${rationFile.name}` : 'Upload Ration Card File'} onPress={pickRationFile} />
+          </View>
+        )}
         {/* Employment History */}
-        <Text style={{ marginTop: 15 }}>Employment History</Text>
-        <Button title={employmentHistoryFile ? `Selected: ${employmentHistoryFile.name}` : 'Upload Employment History File'} onPress={pickEmploymentHistoryFile} />
+        {getUploadedDoc('employment') ? (
+          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
+            <Text>Employment History File: {getUploadedDoc('employment').fileName}</Text>
+            <Button title="Delete Employment History" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('employment')._id)} />
+          </View>
+        ) : (
+          <View>
+            <Text style={{ marginTop: 15 }}>Employment History</Text>
+            <Button title={employmentHistoryFile ? `Selected: ${employmentHistoryFile.name}` : 'Upload Employment History File'} onPress={pickEmploymentHistoryFile} />
+          </View>
+        )}
         {/* Submit Documents Button */}
         <Button title="Submit Documents" onPress={handleSubmitDocuments} color="#2196F3" />
       </View>
