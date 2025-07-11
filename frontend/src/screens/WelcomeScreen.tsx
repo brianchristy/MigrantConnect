@@ -9,6 +9,9 @@ export default function WelcomeScreen({ route, navigation }: any) {
         Welcome{user && user.name ? `, ${user.name}` : ''}!
       </Text>
       <Button title="Logout" onPress={() => navigation.navigate('Login')} />
+      {user && user.phone && (
+        <Button title="View/Edit Profile" onPress={() => navigation.navigate('Profile', { phone: user.phone })} />
+      )}
     </View>
   );
 } 
