@@ -6,15 +6,14 @@ const bcrypt = require('bcryptjs');
 // Register user (after OTP verification on frontend)
 router.post('/register', async (req, res) => {
   console.log('Register request body:', req.body);
-  const { name, phone, aadhaar, language, password } = req.body;
-  if (!phone || !aadhaar || !password) return res.status(400).json({ error: 'Phone, Aadhaar, and password required' });
-  if (!/^\d{10}$/.test(phone)) return res.status(400).json({ error: 'Phone number must be 10 digits' });
-  if (!/^\d{12}$/.test(aadhaar)) return res.status(400).json({ error: 'Aadhaar number must be 12 digits' });
+  const { name, phone, password } = req.body;
+  if (!name || !phone || !password) return res.status(400).json({ error: 'Name, phone, and password are required' });
+  if (!/^[0-9]{10}$/.test(phone)) return res.status(400).json({ error: 'Phone number must be 10 digits' });
   try {
     let user = await User.findOne({ phone });
     if (user) return res.status(400).json({ error: 'User already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    user = new User({ name, phone, aadhaar, language, password: hashedPassword });
+    user = new User({ name, phone, password: hashedPassword });
     await user.save();
     res.json({ message: 'User registered', user });
   } catch (err) {

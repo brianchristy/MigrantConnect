@@ -12,6 +12,9 @@ export default function WelcomeScreen({ route, navigation }: any) {
       {user && user.phone && (
         <Button title="View/Edit Profile" onPress={() => navigation.navigate('Profile', { phone: user.phone })} />
       )}
+      {user && (
+        <Button title="Show/Scan QR Code" onPress={() => navigation.navigate('QR', { user })} />
+      )}
     </View>
   );
 } 
