@@ -2,36 +2,40 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-// Google Places API key (you'll need to add this to your .env file)
-const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || 'YOUR_API_KEY';
+// OpenStreetMap Overpass API - Completely free, no API key needed
+const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
 
-// Test endpoint to verify API key
+// Test endpoint to verify OSM API
 router.get('/healthcare/test', async (req, res) => {
   try {
-    console.log('Testing Google Places API key...');
-    console.log('API Key present:', !!GOOGLE_PLACES_API_KEY);
-    console.log('API Key value:', GOOGLE_PLACES_API_KEY);
+    // Test with a simple search in Trivandrum
+    const testQuery = `
+      [out:json][timeout:25];
+      (
+        node["amenity"="hospital"](around:5000,8.5157514,76.9856155);
+        node["amenity"="clinic"](around:5000,8.5157514,76.9856155);
+        node["amenity"="pharmacy"](around:5000,8.5157514,76.9856155);
+      );
+      out body;
+    `;
     
-    // Test with a simple search
-    const testResponse = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=hospitals&location=12.9716,77.5946&radius=5000&key=${GOOGLE_PLACES_API_KEY}`
-    );
+    const response = await axios.get(`${OVERPASS_API_URL}?data=${encodeURIComponent(testQuery)}`);
     
     res.json({ 
-      message: 'API key test successful',
-      apiKeyPresent: !!GOOGLE_PLACES_API_KEY,
-      testResults: testResponse.data.results?.length || 0
+      message: 'OSM API test successful',
+      elementsFound: response.data.elements?.length || 0,
+      status: 'working'
     });
   } catch (err) {
-    console.error('API key test error:', err);
+    console.error('OSM API test error:', err);
     res.status(500).json({ 
-      error: 'API key test failed',
+      error: 'OSM API test failed',
       details: err.response?.data || err.message
     });
   }
 });
 
-// Find nearby healthcare services
+// Find nearby healthcare services using OpenStreetMap Overpass API
 router.get('/healthcare/nearby', async (req, res) => {
   try {
     const { latitude, longitude, radius = 5000 } = req.query;
@@ -40,59 +44,102 @@ router.get('/healthcare/nearby', async (req, res) => {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
     }
 
-    console.log('Fetching healthcare services for:', { latitude, longitude, radius });
-    console.log('Using API key:', GOOGLE_PLACES_API_KEY ? 'Present' : 'Missing');
+    // Build Overpass query for healthcare facilities
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["amenity"="hospital"](around:${radius},${latitude},${longitude});
+        node["amenity"="clinic"](around:${radius},${latitude},${longitude});
+        node["amenity"="pharmacy"](around:${radius},${latitude},${longitude});
+        node["amenity"="doctors"](around:${radius},${latitude},${longitude});
+        node["healthcare"="hospital"](around:${radius},${latitude},${longitude});
+        node["healthcare"="clinic"](around:${radius},${latitude},${longitude});
+        node["healthcare"="pharmacy"](around:${radius},${latitude},${longitude});
+        way["amenity"="hospital"](around:${radius},${latitude},${longitude});
+        way["amenity"="clinic"](around:${radius},${latitude},${longitude});
+        way["amenity"="pharmacy"](around:${radius},${latitude},${longitude});
+        way["amenity"="doctors"](around:${radius},${latitude},${longitude});
+        way["healthcare"="hospital"](around:${radius},${latitude},${longitude});
+        way["healthcare"="clinic"](around:${radius},${latitude},${longitude});
+        way["healthcare"="pharmacy"](around:${radius},${latitude},${longitude});
+      );
+      out body;
+      >>;
+      out skel qt;
+    `;
 
-    // Check if billing is enabled by testing the API
-    try {
-      const apiUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=health&keyword=hospital|clinic|pharmacy&key=${GOOGLE_PLACES_API_KEY}`;
-      console.log('Google Places API URL:', apiUrl);
+    const response = await axios.get(`${OVERPASS_API_URL}?data=${encodeURIComponent(query)}`);
 
-      const response = await axios.get(apiUrl);
-      
-      console.log('Google Places API response status:', response.status);
-      console.log('Google Places API response data:', response.data);
-
-      if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-        console.error('Google Places API error:', response.data);
-        
-        // If billing is not enabled, return mock data for demo
-        if (response.data.status === 'REQUEST_DENIED' && response.data.error_message?.includes('Billing')) {
-          console.log('Billing not enabled, returning mock data for demo');
-          const mockServices = generateMockHealthcareServices(latitude, longitude);
-          return res.json({ services: mockServices });
-        }
-        
-        return res.status(500).json({ error: `Google Places API error: ${response.data.status}` });
-      }
-
-      const services = response.data.results.map(place => ({
-        id: place.place_id,
-        name: place.name,
-        address: place.vicinity,
-        rating: place.rating,
-        userRatingsTotal: place.user_ratings_total,
-        types: place.types,
-        location: place.geometry.location,
-        distance: calculateDistance(latitude, longitude, place.geometry.location.lat, place.geometry.location.lng)
-      }));
-
-      console.log('Processed services:', services.length);
-      res.json({ services });
-    } catch (apiError) {
-      console.error('Google Places API error:', apiError.response?.data || apiError.message);
-      
-      // If API fails, return mock data for demo
-      console.log('API failed, returning mock data for demo');
+    if (!response.data.elements || response.data.elements.length === 0) {
       const mockServices = generateMockHealthcareServices(latitude, longitude);
-      res.json({ services: mockServices });
+      return res.json({ services: mockServices });
     }
+
+    // Process OSM data into our format
+    const services = response.data.elements
+      .filter(element => element.type === 'node' || element.type === 'way')
+      .map(element => {
+        const lat = element.lat || element.center?.lat;
+        const lng = element.lon || element.center?.lon;
+        
+        if (!lat || !lng) return null;
+
+        const name = element.tags?.name || 
+                   element.tags?.['name:en'] || 
+                   element.tags?.['name:hi'] || 
+                   `${getHealthcareTypeName(element.tags)}`;
+        
+        const address = element.tags?.['addr:street'] || 
+                       element.tags?.['addr:full'] || 
+                       'Address not available';
+        
+        const healthcareType = getHealthcareType(element.tags);
+        const distance = calculateDistance(latitude, longitude, lat, lng);
+
+        return {
+          id: `${element.type}_${element.id}`,
+          name: name,
+          address: address,
+          rating: null, // OSM doesn't provide ratings
+          userRatingsTotal: null,
+          types: [healthcareType],
+          location: { lat, lng },
+          distance: distance,
+          osmData: element // Keep original OSM data for reference
+        };
+      })
+      .filter(service => service !== null)
+      .sort((a, b) => a.distance - b.distance); // Sort by distance
+
+    res.json({ services });
   } catch (err) {
     console.error('Healthcare services error:', err);
-    console.error('Error details:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch healthcare services' });
+    
+    // Fallback to mock data if OSM API fails
+    const mockServices = generateMockHealthcareServices(latitude, longitude);
+    res.json({ services: mockServices });
   }
 });
+
+// Helper function to determine healthcare type from OSM tags
+function getHealthcareType(tags) {
+  if (tags?.amenity === 'hospital' || tags?.healthcare === 'hospital') return 'hospital';
+  if (tags?.amenity === 'clinic' || tags?.healthcare === 'clinic') return 'clinic';
+  if (tags?.amenity === 'pharmacy' || tags?.healthcare === 'pharmacy') return 'pharmacy';
+  if (tags?.amenity === 'doctors') return 'clinic';
+  return 'healthcare';
+}
+
+// Helper function to get readable healthcare type name
+function getHealthcareTypeName(tags) {
+  const type = getHealthcareType(tags);
+  switch (type) {
+    case 'hospital': return 'Hospital';
+    case 'clinic': return 'Medical Clinic';
+    case 'pharmacy': return 'Pharmacy';
+    default: return 'Healthcare Facility';
+  }
+}
 
 // Generate mock healthcare services for demo
 function generateMockHealthcareServices(latitude, longitude) {
@@ -154,16 +201,24 @@ function generateMockHealthcareServices(latitude, longitude) {
   return mockServices;
 }
 
-// Get service details
+// Get service details (for OSM data, we return basic info since detailed data isn't available)
 router.get('/healthcare/:placeId', async (req, res) => {
   try {
     const { placeId } = req.params;
     
-    const response = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,opening_hours,rating,user_ratings_total,website&key=${GOOGLE_PLACES_API_KEY}`
-    );
-
-    const service = response.data.result;
+    // For OSM data, we don't have detailed place information like Google Places
+    // Return basic service information
+    const service = {
+      id: placeId,
+      name: 'Healthcare Facility',
+      address: 'Address information available in main listing',
+      phone: 'Contact information not available',
+      website: null,
+      openingHours: null,
+      rating: null,
+      userRatingsTotal: null
+    };
+    
     res.json({ service });
   } catch (err) {
     console.error('Service details error:', err);
@@ -189,7 +244,6 @@ router.post('/healthcare/book', async (req, res) => {
       bookingDate: new Date().toISOString()
     };
 
-    console.log('Appointment booked:', booking);
     res.json({ 
       message: 'Appointment booked successfully!',
       booking 

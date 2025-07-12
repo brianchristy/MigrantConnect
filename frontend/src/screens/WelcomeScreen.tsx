@@ -48,6 +48,17 @@ export default function WelcomeScreen({ route, navigation }: any) {
             <Text style={styles.cardTitle}>Healthcare Services</Text>
             <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={() => navigation.navigate('Verification', { user })}
+          >
+            <View style={styles.cardIcon}>
+              <Text style={styles.iconText}>🔐</Text>
+            </View>
+            <Text style={styles.cardTitle}>Credential Verification</Text>
+            <Text style={styles.cardSubtitle}>Share and verify credentials using QR codes</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}
