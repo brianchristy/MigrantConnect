@@ -5,6 +5,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import QRScreen from './src/screens/QRScreen';
+import HealthcareScreen from './src/screens/HealthcareScreen';
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="QR" component={QRScreen} />
+        <Stack.Screen name="Healthcare" component={HealthcareScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

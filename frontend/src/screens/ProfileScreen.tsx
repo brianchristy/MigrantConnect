@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Link
 import { getProfile, updateProfile } from '../services/auth';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export default function ProfileScreen({ route, navigation }: any) {
   const phone = route?.params?.phone;
@@ -38,7 +39,7 @@ export default function ProfileScreen({ route, navigation }: any) {
 
   const fetchDocuments = async () => {
     try {
-      const res = await axios.get(`${process.env.API_BASE_URL}/api/documents/${phone}`);
+      const res = await axios.get(`${API_BASE_URL}/api/documents/${phone}`);
       setUploadedDocs(res.data);
     } catch (err) {
       setUploadedDocs([]);
@@ -138,7 +139,7 @@ export default function ProfileScreen({ route, navigation }: any) {
       }
       // Upload all documents sequentially
       for (const formData of formDataList) {
-        await axios.post(`${process.env.API_BASE_URL}/api/documents/upload`, formData, {
+        await axios.post(`${API_BASE_URL}/api/documents/upload`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
@@ -153,7 +154,7 @@ export default function ProfileScreen({ route, navigation }: any) {
   // Add delete document handler
   const handleDeleteDocument = async (docId: string) => {
     try {
-      await axios.delete(`${process.env.API_BASE_URL}/api/documents/${docId}`);
+      await axios.delete(`${API_BASE_URL}/api/documents/${docId}`);
       Alert.alert('Success', 'Document deleted');
       // Clear file selections
       setAadhaarFile(null);
@@ -402,7 +403,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               </View>
             ))}
-          </View>
+    </View>
         )}
       </ScrollView>
     </SafeAreaView>

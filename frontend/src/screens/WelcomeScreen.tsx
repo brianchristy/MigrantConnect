@@ -37,6 +37,17 @@ export default function WelcomeScreen({ route, navigation }: any) {
             <Text style={styles.cardTitle}>QR Codes</Text>
             <Text style={styles.cardSubtitle}>Generate and scan QR codes for documents</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={() => navigation.navigate('Healthcare', { user })}
+          >
+            <View style={styles.cardIcon}>
+              <Text style={styles.iconText}>🏥</Text>
+            </View>
+            <Text style={styles.cardTitle}>Healthcare Services</Text>
+            <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}

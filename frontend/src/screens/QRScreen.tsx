@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Alert, StyleSheet, SafeAreaView, ScrollVi
 import QRCode from '../components/QRCode';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export default function QRScreen({ route, navigation }: any) {
   const user = route?.params?.user;
@@ -20,7 +21,7 @@ export default function QRScreen({ route, navigation }: any) {
 
   const fetchDocuments = async (phone: string) => {
     try {
-      const res = await axios.get(`${process.env.API_BASE_URL}/api/documents/${phone}`);
+      const res = await axios.get(`${API_BASE_URL}/api/documents/${phone}`);
       setUploadedDocs(res.data);
     } catch (err) {
       setUploadedDocs([]);
@@ -112,7 +113,7 @@ export default function QRScreen({ route, navigation }: any) {
                 {selectedDoc.type.charAt(0).toUpperCase() + selectedDoc.type.slice(1)} Document
               </Text>
               <View style={styles.qrWrapper}>
-                <QRCode value={JSON.stringify({ download: `${process.env.API_BASE_URL}/api/documents/${selectedDoc._id}/download` })} />
+                <QRCode value={JSON.stringify({ download: `${API_BASE_URL}/api/documents/${selectedDoc._id}/download` })} />
               </View>
               <TouchableOpacity 
                 style={styles.hideButton} 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export default function LoginScreen({ navigation }: any) {
   const [phone, setPhone] = useState('');
@@ -8,7 +9,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post(`${process.env.API_BASE_URL}/api/auth/login`, { phone, password });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { phone, password });
       Alert.alert('Success', 'Login successful!');
       if (navigation) navigation.navigate('Welcome', { user: res.data.user });
     } catch (err: any) {
