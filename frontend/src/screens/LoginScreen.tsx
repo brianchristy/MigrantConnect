@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function LoginScreen({ navigation }: any) {
+  const { changeLanguage } = useLanguage();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
       const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { phone, password });
+      
+      // Apply user's language preference after successful login
+      if (res.data.user && res.data.user.language) {
+        await changeLanguage(res.data.user.language);
+        // Small delay to ensure language change is applied
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       Alert.alert('Success', 'Login successful!');
       if (navigation) navigation.navigate('Welcome', { user: res.data.user });
     } catch (err: any) {
@@ -20,11 +30,15 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
-        <View style={styles.content}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.logo}>MigrantConnect</Text>
-            <Text style={styles.subtitle}>Portable Digital Identity</Text>
+            <Text style={styles.subtitle}>Your Digital Identity Platform</Text>
           </View>
 
           {/* Form */}
@@ -58,10 +72,10 @@ export default function LoginScreen({ navigation }: any) {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.linkText}>Register</Text>
+              <Text style={styles.linkText}>Register here</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -75,10 +89,10 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: 24,
   },
   header: {
     alignItems: 'center',

@@ -4,8 +4,10 @@ import QRCode from '../components/QRCode';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function QRScreen({ route, navigation }: any) {
+  const { translations: t } = useLanguage();
   const user = route?.params?.user;
   const [showScanner, setShowScanner] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -61,24 +63,24 @@ export default function QRScreen({ route, navigation }: any) {
             style={styles.backButton} 
             onPress={() => navigation.navigate('Welcome', { user })}
           >
-            <Text style={styles.backButtonText}>← Back to Welcome</Text>
+            <Text style={styles.backButtonText}>← {t.common.backToWelcome}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>QR Code Manager</Text>
-          <Text style={styles.headerSubtitle}>Generate and scan QR codes for your documents</Text>
+          <Text style={styles.headerTitle}>{t.qr.title}</Text>
+          <Text style={styles.headerSubtitle}>{t.qr.subtitle}</Text>
         </View>
 
         {/* Available Documents */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Documents</Text>
+          <Text style={styles.sectionTitle}>{t.qr.availableDocuments}</Text>
           {uploadedDocs.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📄</Text>
-              <Text style={styles.emptyTitle}>No documents uploaded</Text>
-              <Text style={styles.emptySubtitle}>Upload documents in your profile to generate QR codes</Text>
+              <Text style={styles.emptyTitle}>{t.qr.noDocuments}</Text>
+              <Text style={styles.emptySubtitle}>{t.qr.uploadDocumentsHint}</Text>
             </View>
           ) : (
             <View style={styles.documentsGrid}>
@@ -107,10 +109,10 @@ export default function QRScreen({ route, navigation }: any) {
         {/* QR Code Display */}
         {selectedDoc && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>QR Code</Text>
+            <Text style={styles.sectionTitle}>{t.qr.qrCode}</Text>
             <View style={styles.qrContainer}>
               <Text style={styles.qrTitle}>
-                {selectedDoc.type.charAt(0).toUpperCase() + selectedDoc.type.slice(1)} Document
+                {selectedDoc.type.charAt(0).toUpperCase() + selectedDoc.type.slice(1)} {t.qr.document}
               </Text>
               <View style={styles.qrWrapper}>
                 <QRCode value={JSON.stringify({ download: `${API_BASE_URL}/api/documents/${selectedDoc._id}/download` })} />
@@ -119,7 +121,7 @@ export default function QRScreen({ route, navigation }: any) {
                 style={styles.hideButton} 
                 onPress={() => setSelectedDoc(null)}
               >
-                <Text style={styles.hideButtonText}>Hide QR Code</Text>
+                <Text style={styles.hideButtonText}>{t.qr.hideQrCode}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -127,9 +129,9 @@ export default function QRScreen({ route, navigation }: any) {
 
         {/* Scanner Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Scan QR Code</Text>
+          <Text style={styles.sectionTitle}>{t.qr.scanQrCode}</Text>
           <TouchableOpacity style={styles.scanButton} onPress={handleRequestPermission}>
-            <Text style={styles.scanButtonText}>Open Scanner</Text>
+            <Text style={styles.scanButtonText}>{t.qr.openScanner}</Text>
           </TouchableOpacity>
           
           {showScanner && permission?.granted && (
@@ -146,7 +148,7 @@ export default function QRScreen({ route, navigation }: any) {
         {/* Scanned Data Display */}
         {scannedData && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Scanned Data</Text>
+            <Text style={styles.sectionTitle}>{t.qr.scannedData}</Text>
             <View style={styles.scannedDataCard}>
               {(() => {
                 let parsed = null;
@@ -160,15 +162,15 @@ export default function QRScreen({ route, navigation }: any) {
                         style={styles.downloadLink}
                         onPress={() => Linking.openURL(parsed.download)}
                       >
-                        <Text style={styles.downloadLinkText}>📥 Download Document</Text>
+                        <Text style={styles.downloadLinkText}>📥 {t.qr.downloadDocument}</Text>
                       </TouchableOpacity>
                     )}
-                    {parsed.phone && <Text style={styles.scannedText}>📱 Phone: {parsed.phone}</Text>}
-                    {parsed.aadhaar && <Text style={styles.scannedText}>🆔 Aadhaar: {parsed.aadhaar}</Text>}
-                    {parsed.name && <Text style={styles.scannedText}>👤 Name: {parsed.name}</Text>}
+                    {parsed.phone && <Text style={styles.scannedText}>📱 {t.qr.phone}: {parsed.phone}</Text>}
+                    {parsed.aadhaar && <Text style={styles.scannedText}>🆔 {t.qr.aadhaar}: {parsed.aadhaar}</Text>}
+                    {parsed.name && <Text style={styles.scannedText}>👤 {t.qr.name}: {parsed.name}</Text>}
                   </View>
                 ) : (
-                  <Text style={styles.scannedText}>📄 Raw Data: {scannedData}</Text>
+                  <Text style={styles.scannedText}>📄 {t.qr.rawData}: {scannedData}</Text>
                 );
               })()}
             </View>

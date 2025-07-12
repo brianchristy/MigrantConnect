@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { registerUser } from '../services/auth';
+import { languageNames, Language } from '../i18n';
 
 export default function RegistrationScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const [showLanguageSelection, setShowLanguageSelection] = useState(false);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -14,12 +17,17 @@ export default function RegistrationScreen({ navigation }: any) {
       return;
     }
     try {
-      await registerUser({ name, phone, password });
-      Alert.alert('Success', 'User registered!');
+      await registerUser({ name, phone, password, language: selectedLanguage });
+      Alert.alert('Success', 'Registration successful!');
       if (navigation) navigation.navigate('Login');
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.error || 'Registration failed');
     }
+  };
+
+  const handleLanguageSelect = async (language: Language) => {
+    setSelectedLanguage(language);
+    setShowLanguageSelection(false);
   };
 
   return (
@@ -28,18 +36,18 @@ export default function RegistrationScreen({ navigation }: any) {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.logo}>Create Account</Text>
+            <Text style={styles.logo}>Register</Text>
             <Text style={styles.subtitle}>Join MigrantConnect</Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>Name</Text>
             <TextInput 
               value={name} 
               onChangeText={setName} 
               style={styles.input}
-              placeholder="Enter your full name"
+              placeholder="Enter your name"
               placeholderTextColor="#999"
             />
             
@@ -59,7 +67,7 @@ export default function RegistrationScreen({ navigation }: any) {
               onChangeText={setPassword} 
               secureTextEntry 
               style={styles.input}
-              placeholder="Create a password"
+              placeholder="Enter your password"
               placeholderTextColor="#999"
             />
             
@@ -73,8 +81,20 @@ export default function RegistrationScreen({ navigation }: any) {
               placeholderTextColor="#999"
             />
             
+            {/* Language Selection */}
+            <Text style={styles.label}>Language Preference</Text>
+            <TouchableOpacity 
+              style={styles.languageButton} 
+              onPress={() => setShowLanguageSelection(true)}
+            >
+              <Text style={styles.languageButtonText}>
+                {languageNames[selectedLanguage]}
+              </Text>
+              <Text style={styles.languageArrow}>▼</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-              <Text style={styles.registerButtonText}>Create Account</Text>
+              <Text style={styles.registerButtonText}>Register</Text>
             </TouchableOpacity>
           </View>
 
@@ -82,11 +102,53 @@ export default function RegistrationScreen({ navigation }: any) {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.linkText}>Login</Text>
+              <Text style={styles.linkText}>Login here</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageSelection}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowLanguageSelection(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Language</Text>
+              <TouchableOpacity onPress={() => setShowLanguageSelection(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalBody}>
+              {Object.entries(languageNames).map(([code, name]) => (
+                <TouchableOpacity
+                  key={code}
+                  style={[
+                    styles.languageOption,
+                    selectedLanguage === code && styles.languageOptionSelected
+                  ]}
+                  onPress={() => handleLanguageSelect(code as Language)}
+                >
+                  <Text style={[
+                    styles.languageOptionText,
+                    selectedLanguage === code && styles.languageOptionTextSelected
+                  ]}>
+                    {name}
+                  </Text>
+                  {selectedLanguage === code && (
+                    <Text style={styles.languageOptionCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+    </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -176,5 +238,94 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#3498db',
     fontWeight: '600',
+  },
+  languageButton: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e1e8ed',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  languageButtonText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
+  },
+  languageArrow: {
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e8ed',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#7f8c8d',
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  languageOptionSelected: {
+    backgroundColor: '#3498db',
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
+  },
+  languageOptionTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  languageOptionCheck: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 }); 

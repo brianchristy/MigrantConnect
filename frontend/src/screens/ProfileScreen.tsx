@@ -4,14 +4,14 @@ import { getProfile, updateProfile } from '../services/auth';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function ProfileScreen({ route, navigation }: any) {
+  const { translations: t } = useLanguage();
   const phone = route?.params?.phone;
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
-  // Remove password state
-  // const [password, setPassword] = useState('');
 
   // Document states
   const [aadhaarNumber, setAadhaarNumber] = useState('');
@@ -30,7 +30,7 @@ export default function ProfileScreen({ route, navigation }: any) {
           setProfile(res.data);
           setName(res.data.name || '');
         })
-        .catch(() => Alert.alert('Error', 'Failed to load profile'))
+        .catch(() => Alert.alert(t.common.error, 'Failed to load profile'))
         .finally(() => setLoading(false));
       // Fetch uploaded documents
       fetchDocuments();
@@ -46,13 +46,12 @@ export default function ProfileScreen({ route, navigation }: any) {
     }
   };
 
-  // Remove password from handleUpdate
   const handleUpdate = async () => {
     try {
       await updateProfile(phone, { name });
-      Alert.alert('Success', 'Profile updated!');
+      Alert.alert(t.common.success, 'Profile updated!');
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Update failed');
+      Alert.alert(t.common.error, err.response?.data?.error || 'Update failed');
     }
   };
 
@@ -143,11 +142,11 @@ export default function ProfileScreen({ route, navigation }: any) {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
-      Alert.alert('Success', 'Documents uploaded successfully!');
+      Alert.alert(t.common.success, 'Documents uploaded successfully!');
       clearFileSelections(); // Clear selections after upload
       fetchDocuments(); // Refresh uploaded docs
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Document upload failed');
+      Alert.alert(t.common.error, err.response?.data?.error || 'Document upload failed');
     }
   };
 
@@ -155,7 +154,7 @@ export default function ProfileScreen({ route, navigation }: any) {
   const handleDeleteDocument = async (docId: string) => {
     try {
       await axios.delete(`${API_BASE_URL}/api/documents/${docId}`);
-      Alert.alert('Success', 'Document deleted');
+      Alert.alert(t.common.success, 'Document deleted');
       // Clear file selections
       setAadhaarFile(null);
       setPanFile(null);
@@ -166,7 +165,7 @@ export default function ProfileScreen({ route, navigation }: any) {
       setRationNumber('');
       fetchDocuments();
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.error || 'Failed to delete document');
+      Alert.alert(t.common.error, err?.response?.data?.error || 'Failed to delete document');
     }
   };
 
@@ -195,22 +194,22 @@ export default function ProfileScreen({ route, navigation }: any) {
             style={styles.backButton} 
             onPress={() => navigation.navigate('Welcome', { user: { phone } })}
           >
-            <Text style={styles.backButtonText}>← Back to Welcome</Text>
+            <Text style={styles.backButtonText}>← {t.common.backToWelcome}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile & Documents</Text>
-          <Text style={styles.headerSubtitle}>Manage your identity documents</Text>
+          <Text style={styles.headerTitle}>{t.profile.title}</Text>
+          <Text style={styles.headerSubtitle}>{t.profile.subtitle}</Text>
         </View>
 
         {/* Profile Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Information</Text>
+          <Text style={styles.sectionTitle}>{t.profile.profileInfo}</Text>
           <View style={styles.profileCard}>
-            <Text style={styles.label}>Phone: {phone}</Text>
-            <Text style={styles.label}>Name</Text>
+            <Text style={styles.label}>{t.profile.phone}: {phone}</Text>
+            <Text style={styles.label}>{t.profile.name}</Text>
             <TextInput 
               value={name} 
               onChangeText={setName} 
@@ -219,14 +218,14 @@ export default function ProfileScreen({ route, navigation }: any) {
               placeholderTextColor="#999"
             />
             <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
-              <Text style={styles.updateButtonText}>Update Profile</Text>
+              <Text style={styles.updateButtonText}>{t.profile.updateProfile}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Document Upload Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Add Documents</Text>
+          <Text style={styles.sectionTitle}>{t.profile.addDocuments}</Text>
           
           {/* Aadhaar */}
           {getUploadedDoc('aadhaar') ? (
@@ -241,7 +240,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                 style={styles.deleteButton} 
                 onPress={() => handleDeleteDocument(getUploadedDoc('aadhaar')._id)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>{t.profile.delete}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -280,7 +279,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                 style={styles.deleteButton} 
                 onPress={() => handleDeleteDocument(getUploadedDoc('pan')._id)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>{t.profile.delete}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -318,7 +317,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                 style={styles.deleteButton} 
                 onPress={() => handleDeleteDocument(getUploadedDoc('ration')._id)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>{t.profile.delete}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -355,7 +354,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                 style={styles.deleteButton} 
                 onPress={() => handleDeleteDocument(getUploadedDoc('employment')._id)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>{t.profile.delete}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -375,14 +374,14 @@ export default function ProfileScreen({ route, navigation }: any) {
 
           {/* Submit Button */}
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmitDocuments}>
-            <Text style={styles.submitButtonText}>Submit Documents</Text>
+            <Text style={styles.submitButtonText}>{t.profile.submitDocuments}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Uploaded Documents Section */}
         {uploadedDocs.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Uploaded Documents</Text>
+            <Text style={styles.sectionTitle}>{t.profile.uploadedDocuments}</Text>
             {uploadedDocs.map((doc, idx) => (
               <View key={doc._id || idx} style={styles.downloadCard}>
                 <View style={styles.docHeader}>
@@ -399,7 +398,7 @@ export default function ProfileScreen({ route, navigation }: any) {
                   style={styles.downloadButton} 
                   onPress={() => Linking.openURL(`${process.env.API_BASE_URL}/api/documents/${doc._id}/download`)}
                 >
-                  <Text style={styles.downloadButtonText}>Download</Text>
+                  <Text style={styles.downloadButtonText}>{t.profile.download}</Text>
                 </TouchableOpacity>
               </View>
             ))}

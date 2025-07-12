@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Service {
   id: string;
@@ -30,6 +31,7 @@ interface Service {
 }
 
 export default function HealthcareScreen({ route, navigation }: any) {
+  const { translations: t } = useLanguage();
   const user = route?.params?.user;
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -54,7 +56,7 @@ export default function HealthcareScreen({ route, navigation }: any) {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required to find nearby healthcare services.');
+        Alert.alert(t.common.permissionDenied, t.healthcare.locationPermissionRequired);
         return;
       }
 
@@ -65,7 +67,7 @@ export default function HealthcareScreen({ route, navigation }: any) {
       // Fetch nearby healthcare services
       await fetchNearbyServices(currentLocation.coords.latitude, currentLocation.coords.longitude);
     } catch (error) {
-      Alert.alert('Error', 'Failed to get location. Please try again.');
+      Alert.alert(t.common.error, t.healthcare.locationError);
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export default function HealthcareScreen({ route, navigation }: any) {
       setFilteredServices(response.data.services); // Initially show all services
     } catch (error: any) {
       console.error('Error fetching services:', error);
-      Alert.alert('Error', `Failed to fetch nearby healthcare services: ${error.response?.data?.error || error.message}`);
+      Alert.alert(t.common.error, `${t.healthcare.fetchError}: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -129,11 +131,11 @@ export default function HealthcareScreen({ route, navigation }: any) {
     setSelectedService(service);
     Alert.alert(
       service.name,
-      `Address: ${service.address}\nDistance: ${service.distance} km\nType: ${service.types?.[0] || 'Healthcare'}`,
+      `${t.healthcare.address}: ${service.address}\n${t.healthcare.distance}: ${service.distance} km\n${t.healthcare.type}: ${service.types?.[0] || t.healthcare.healthcare}`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Book Appointment', onPress: () => bookAppointment(service) },
-        { text: 'Get Directions', onPress: () => getDirections(service) }
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.healthcare.bookAppointment, onPress: () => bookAppointment(service) },
+        { text: t.healthcare.getDirections, onPress: () => getDirections(service) }
       ]
     );
   };
@@ -152,9 +154,9 @@ export default function HealthcareScreen({ route, navigation }: any) {
         userName: user?.name
       });
 
-      Alert.alert('Success', 'Appointment booked successfully!');
+      Alert.alert(t.common.success, t.healthcare.appointmentBooked);
     } catch (error) {
-      Alert.alert('Error', 'Failed to book appointment. Please try again.');
+      Alert.alert(t.common.error, t.healthcare.appointmentError);
     }
   };
 
@@ -168,7 +170,7 @@ export default function HealthcareScreen({ route, navigation }: any) {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3498db" />
-          <Text style={styles.loadingText}>Finding nearby healthcare services...</Text>
+          <Text style={styles.loadingText}>{t.healthcare.findingServices}</Text>
         </View>
       </SafeAreaView>
     );
@@ -182,14 +184,14 @@ export default function HealthcareScreen({ route, navigation }: any) {
           style={styles.backButton} 
           onPress={() => navigation.navigate('Welcome', { user })}
         >
-          <Text style={styles.backButtonText}>← Back to Welcome</Text>
+          <Text style={styles.backButtonText}>← {t.common.backToWelcome}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Healthcare Services</Text>
-        <Text style={styles.headerSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
+        <Text style={styles.headerTitle}>{t.healthcare.title}</Text>
+        <Text style={styles.headerSubtitle}>{t.healthcare.subtitle}</Text>
       </View>
 
       {/* View Mode Toggle */}
@@ -198,66 +200,61 @@ export default function HealthcareScreen({ route, navigation }: any) {
           style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
           onPress={() => setViewMode('list')}
         >
-          <Text style={[styles.toggleText, viewMode === 'list' && styles.activeToggleText]}>📋 List</Text>
+          <Text style={[styles.toggleText, viewMode === 'list' && styles.activeToggleText]}>
+            {t.healthcare.list}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.toggleButton, viewMode === 'map' && styles.activeToggle]}
           onPress={() => setViewMode('map')}
         >
-          <Text style={[styles.toggleText, viewMode === 'map' && styles.activeToggleText]}>🗺️ Map</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Filter Button */}
-      <View style={styles.filterButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.filterButton, showFilters && styles.filterButtonActive]}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Text style={[styles.filterButtonText, showFilters && styles.filterButtonTextActive]}>
-            🔍 Filters {selectedTypes.length < 3 && `(${selectedTypes.length})`}
+          <Text style={[styles.toggleText, viewMode === 'map' && styles.activeToggleText]}>
+            {t.healthcare.map}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Filter Panel */}
+      {/* Filter Button */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity 
+          style={styles.filterButton} 
+          onPress={() => setShowFilters(!showFilters)}
+        >
+          <Text style={styles.filterButtonText}>🔍 {t.healthcare.filters}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Filters */}
       {showFilters && (
-        <View style={styles.filterPanel}>
+        <View style={styles.filtersContainer}>
           {/* Service Type Filters */}
           <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>🏥 Service Type</Text>
-            <Text style={styles.filterSectionSubtitle}>Select the types of healthcare services you need</Text>
-            <View style={styles.filterChips}>
+            <Text style={styles.filterTitle}>{t.healthcare.serviceTypes}</Text>
+            <View style={styles.typeButtons}>
               {[
-                { key: 'hospital', label: '🏥 Hospitals', description: 'Large medical facilities' },
-                { key: 'clinic', label: '🏥 Clinics', description: 'Medical clinics & doctors' },
-                { key: 'pharmacy', label: '💊 Pharmacies', description: 'Medicine & supplies' }
-              ].map(({ key, label, description }) => (
+                { key: 'hospital', label: t.healthcare.hospitals },
+                { key: 'clinic', label: t.healthcare.clinics },
+                { key: 'pharmacy', label: t.healthcare.pharmacies }
+              ].map(type => (
                 <TouchableOpacity
-                  key={key}
+                  key={type.key}
                   style={[
-                    styles.filterChip,
-                    selectedTypes.includes(key) && styles.filterChipActive
+                    styles.typeButton,
+                    selectedTypes.includes(type.key) && styles.selectedTypeButton
                   ]}
                   onPress={() => {
-                    if (selectedTypes.includes(key)) {
-                      setSelectedTypes(selectedTypes.filter(type => type !== key));
+                    if (selectedTypes.includes(type.key)) {
+                      setSelectedTypes(selectedTypes.filter(t => t !== type.key));
                     } else {
-                      setSelectedTypes([...selectedTypes, key]);
+                      setSelectedTypes([...selectedTypes, type.key]);
                     }
                   }}
                 >
                   <Text style={[
-                    styles.filterChipText,
-                    selectedTypes.includes(key) && styles.filterChipTextActive
+                    styles.typeButtonText,
+                    selectedTypes.includes(type.key) && styles.selectedTypeButtonText
                   ]}>
-                    {label}
-                  </Text>
-                  <Text style={[
-                    styles.filterChipDescription,
-                    selectedTypes.includes(key) && styles.filterChipDescriptionActive
-                  ]}>
-                    {description}
+                    {type.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -266,21 +263,20 @@ export default function HealthcareScreen({ route, navigation }: any) {
 
           {/* Distance Filter */}
           <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>📍 Max Distance: {maxDistance} km</Text>
-            <Text style={styles.filterSectionSubtitle}>How far you're willing to travel</Text>
+            <Text style={styles.filterTitle}>{t.healthcare.maxDistance} ({maxDistance} km)</Text>
             <View style={styles.distanceButtons}>
-              {[1, 3, 5, 10, 15, 20].map(distance => (
+              {[1, 3, 5, 10, 20].map(distance => (
                 <TouchableOpacity
                   key={distance}
                   style={[
                     styles.distanceButton,
-                    maxDistance === distance && styles.distanceButtonActive
+                    maxDistance === distance && styles.selectedDistanceButton
                   ]}
                   onPress={() => setMaxDistance(distance)}
                 >
                   <Text style={[
                     styles.distanceButtonText,
-                    maxDistance === distance && styles.distanceButtonTextActive
+                    maxDistance === distance && styles.selectedDistanceButtonText
                   ]}>
                     {distance} km
                   </Text>
@@ -288,66 +284,44 @@ export default function HealthcareScreen({ route, navigation }: any) {
               ))}
             </View>
           </View>
-
-          {/* Results Count */}
-          <View style={styles.resultsCount}>
-            <Text style={styles.resultsCountText}>
-              📊 {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} found
-              {filteredServices.length >= 50 && ' (showing top 50 nearest)'}
-            </Text>
-            {filteredServices.length === 0 && services.length > 0 && (
-              <Text style={styles.resultsCountSubtitle}>
-                Try adjusting your filters to see more results
-              </Text>
-            )}
-            {filteredServices.length > 0 && (
-              <Text style={styles.resultsCountSubtitle}>
-                Results sorted by distance (nearest first)
-              </Text>
-            )}
-          </View>
         </View>
       )}
 
+      {/* Results Count */}
+      <View style={styles.resultsContainer}>
+        <Text style={styles.resultsText}>
+          {t.healthcare.foundServices}: {filteredServices.length}
+        </Text>
+      </View>
+
       {/* Content */}
       {viewMode === 'list' ? (
-        <ScrollView style={styles.servicesList}>
+        <ScrollView style={styles.listContainer}>
           {filteredServices.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🏥</Text>
-              <Text style={styles.emptyTitle}>
-                {services.length === 0 ? 'No services found' : 'No services match your filters'}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                {services.length === 0 
-                  ? 'Try refreshing or check your location' 
-                  : 'Try adjusting your filters or increasing the distance range'
-                }
-              </Text>
-              <TouchableOpacity style={styles.refreshButton} onPress={getCurrentLocation}>
-                <Text style={styles.refreshButtonText}>Refresh</Text>
-              </TouchableOpacity>
+              <Text style={styles.emptyTitle}>{t.healthcare.noServicesFound}</Text>
+              <Text style={styles.emptySubtitle}>{t.healthcare.tryAdjustingFilters}</Text>
             </View>
           ) : (
             filteredServices.map((service, index) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={service.id || index}
                 style={styles.serviceCard}
                 onPress={() => handleServicePress(service)}
               >
                 <View style={styles.serviceHeader}>
-                  <Text style={styles.serviceIcon}>
-                    {service.types?.includes('hospital') ? '🏥' : 
-                     service.types?.includes('pharmacy') ? '💊' : '🏥'}
-                  </Text>
-                  <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceName}>{service.name}</Text>
-                    <Text style={styles.serviceAddress}>{service.address}</Text>
-                  </View>
+                  <Text style={styles.serviceName}>{service.name}</Text>
+                  <Text style={styles.serviceDistance}>{service.distance.toFixed(1)} km</Text>
                 </View>
-                <View style={styles.serviceDetails}>
-                  <Text style={styles.serviceDistance}>{service.distance} km away</Text>
-                  <Text style={styles.serviceType}>{service.types?.[0] || 'Healthcare'}</Text>
+                <Text style={styles.serviceAddress}>{service.address}</Text>
+                <View style={styles.serviceFooter}>
+                  <Text style={styles.serviceType}>
+                    {service.types?.[0]?.charAt(0).toUpperCase() + service.types?.[0]?.slice(1) || t.healthcare.healthcare}
+                  </Text>
+                  {service.rating && (
+                    <Text style={styles.serviceRating}>⭐ {service.rating}</Text>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
@@ -365,17 +339,18 @@ export default function HealthcareScreen({ route, navigation }: any) {
                 longitudeDelta: 0.01,
               }}
             >
-              {/* User's location */}
+              {/* Current location marker */}
               <Marker
                 coordinate={{
                   latitude: location.coords.latitude,
                   longitude: location.coords.longitude,
                 }}
-                title="Your Location"
-                pinColor="blue"
+                title={t.healthcare.yourLocation}
+                description={t.healthcare.currentLocation}
+                pinColor="#3498db"
               />
               
-              {/* Healthcare services */}
+              {/* Service markers */}
               {filteredServices.map((service, index) => (
                 <Marker
                   key={service.id || index}
@@ -384,9 +359,8 @@ export default function HealthcareScreen({ route, navigation }: any) {
                     longitude: service.location.lng,
                   }}
                   title={service.name}
-                  description={service.address}
-                  pinColor="red"
-                  onPress={() => handleServicePress(service)}
+                  description={`${service.distance.toFixed(1)} km away`}
+                  pinColor="#e74c3c"
                 />
               ))}
             </MapView>
@@ -751,5 +725,147 @@ const styles = StyleSheet.create({
   filterButtonContainer: {
     alignItems: 'center',
     marginBottom: 20,
+  },
+  filterContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  filtersContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  filterTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 12,
+  },
+  typeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  typeButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: '#e1e8ed',
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  selectedTypeButton: {
+    backgroundColor: '#3498db',
+    borderColor: '#3498db',
+  },
+  typeButtonText: {
+    fontSize: 14,
+    color: '#2c3e50',
+    fontWeight: '600',
+  },
+  selectedTypeButtonText: {
+    color: '#ffffff',
+  },
+  distanceButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  distanceButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: '#e1e8ed',
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  selectedDistanceButton: {
+    backgroundColor: '#27ae60',
+    borderColor: '#27ae60',
+  },
+  distanceButtonText: {
+    fontSize: 12,
+    color: '#2c3e50',
+    fontWeight: '600',
+  },
+  selectedDistanceButtonText: {
+    color: '#ffffff',
+  },
+  resultsContainer: {
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e1e8ed',
+  },
+  resultsText: {
+    fontSize: 14,
+    color: '#27ae60',
+    fontWeight: '600',
+  },
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  serviceCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  serviceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  serviceName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    flex: 1,
+    marginRight: 10,
+  },
+  serviceDistance: {
+    fontSize: 14,
+    color: '#27ae60',
+    fontWeight: '600',
+  },
+  serviceAddress: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginTop: 4,
+  },
+  serviceFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  serviceType: {
+    fontSize: 14,
+    color: '#3498db',
+    fontWeight: '600',
+  },
+  serviceRating: {
+    fontSize: 14,
+    color: '#f39c12',
+    fontWeight: '600',
   },
 }); 

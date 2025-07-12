@@ -6,18 +6,25 @@ const bcrypt = require('bcryptjs');
 // Register user (after OTP verification on frontend)
 router.post('/register', async (req, res) => {
   console.log('Register request body:', req.body);
-  const { name, phone, password } = req.body;
+  const { name, phone, password, language } = req.body;
   if (!name || !phone || !password) return res.status(400).json({ error: 'Name, phone, and password are required' });
   if (!/^[0-9]{10}$/.test(phone)) return res.status(400).json({ error: 'Phone number must be 10 digits' });
   try {
     let user = await User.findOne({ phone });
     if (user) return res.status(400).json({ error: 'User already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    user = new User({ name, phone, password: hashedPassword });
+    user = new User({ 
+      name, 
+      phone, 
+      password: hashedPassword,
+      language: language || 'en' // Default to English if not provided
+    });
     await user.save();
+    console.log('User registered successfully:', { name: user.name, phone: user.phone });
     res.json({ message: 'User registered', user });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
@@ -42,6 +49,24 @@ router.get('/:phone', async (req, res) => {
     const user = await User.findOne({ phone: req.params.phone });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update user language preference
+router.put('/:phone/language', async (req, res) => {
+  try {
+    const { language } = req.body;
+    if (!language) return res.status(400).json({ error: 'Language is required' });
+    
+    const user = await User.findOne({ phone: req.params.phone });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    user.language = language;
+    await user.save();
+    
+    res.json({ message: 'Language preference updated', user });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

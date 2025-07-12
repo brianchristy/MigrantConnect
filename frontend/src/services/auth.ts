@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
-const API_URL = `${process.env.API_BASE_URL}/api/auth`;
-const USERS_URL = `${process.env.API_BASE_URL}/api/users`;
+const API_URL = `${API_BASE_URL}/api/auth`;
+const USERS_URL = `${API_BASE_URL}/api/users`;
 
-export const registerUser = async (data: { name: string; phone: string; password: string }) => {
+export const registerUser = async (data: { name: string; phone: string; password: string; language?: string }) => {
   return axios.post(`${API_URL}/register`, data);
 };
 
