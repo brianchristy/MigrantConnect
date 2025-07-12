@@ -32,9 +32,14 @@ class EligibilityService {
         return {
           eligible: false,
           reason: 'No eligibility rules found for this service and credential type',
-          entitlement: null
+          entitlement: null,
+          documentVerification: null,
+          warnings: []
         };
       }
+
+      const warnings = [];
+      const documentVerification = await this.verifyDocument(credential);
 
       // Check cooldown period for each rule
       for (const rule of rules) {
@@ -52,7 +57,9 @@ class EligibilityService {
               return {
                 eligible: false,
                 reason: `Cooldown period not met. Last verification was ${Math.ceil(daysSinceLastVerification)} days ago`,
-                entitlement: null
+                entitlement: null,
+                documentVerification,
+                warnings
               };
             }
           }
@@ -77,7 +84,9 @@ class EligibilityService {
             return {
               eligible: false,
               reason: `Monthly usage limit exceeded (${rule.maxUsagePerMonth} per month)`,
-              entitlement: null
+              entitlement: null,
+              documentVerification,
+              warnings
             };
           }
         }
@@ -90,19 +99,30 @@ class EligibilityService {
           return {
             eligible: false,
             reason: `Failed rule: ${ruleResult.description}`,
-            entitlement: null
+            entitlement: null,
+            documentVerification,
+            warnings: [...warnings, ...ruleResult.warnings]
           };
         }
+        warnings.push(...ruleResult.warnings);
       }
 
-      // If all rules pass, use the first rule's entitlement
-      const firstRule = rules[0];
-      const entitlement = firstRule.entitlement;
+      // Calculate entitlements based on service type
+      let entitlement = null;
+      if (serviceType === 'pds_verification' || serviceType === 'ration_portability') {
+        entitlement = this.calculatePDSEntitlement(credential, rules[0]);
+      } else {
+        // If all rules pass, use the first rule's entitlement
+        const firstRule = rules[0];
+        entitlement = firstRule.entitlement;
+      }
 
       return {
         eligible: true,
         reason: 'All eligibility criteria met',
-        entitlement
+        entitlement,
+        documentVerification,
+        warnings
       };
 
     } catch (error) {
@@ -110,27 +130,158 @@ class EligibilityService {
       return {
         eligible: false,
         reason: 'Error evaluating eligibility',
-        entitlement: null
+        entitlement: null,
+        documentVerification: null,
+        warnings: []
       };
     }
   }
 
+  async verifyDocument(credential) {
+    try {
+      const verification = {
+        isGenuine: false,
+        verificationStatus: 'pending',
+        issues: [],
+        recommendations: []
+      };
+
+      // Check if document verification fields exist
+      if (!credential.documentVerification) {
+        verification.issues.push('Document verification data not found');
+        return verification;
+      }
+
+      const docVer = credential.documentVerification;
+
+      // Check document verification status
+      if (docVer.verificationStatus === 'verified') {
+        verification.isGenuine = true;
+        verification.verificationStatus = 'verified';
+      } else if (docVer.verificationStatus === 'rejected') {
+        verification.issues.push('Document verification was rejected');
+        verification.recommendations.push('Contact issuing authority for re-verification');
+      } else {
+        verification.issues.push('Document verification is pending');
+        verification.recommendations.push('Complete document verification process');
+      }
+
+      // Check document expiration
+      if (credential.expiresAt && new Date() > credential.expiresAt) {
+        verification.issues.push('Document has expired');
+        verification.recommendations.push('Renew document before using services');
+      }
+
+      // Check document hash integrity
+      if (docVer.documentHash) {
+        const expectedHash = this.generateDocumentHash(credential);
+        if (docVer.documentHash !== expectedHash) {
+          verification.issues.push('Document integrity check failed');
+          verification.recommendations.push('Document may have been tampered with');
+        }
+      }
+
+      return verification;
+    } catch (error) {
+      console.error('Error verifying document:', error);
+      return {
+        isGenuine: false,
+        verificationStatus: 'error',
+        issues: ['Error during document verification'],
+        recommendations: ['Contact support']
+      };
+    }
+  }
+
+  generateDocumentHash(credential) {
+    const data = JSON.stringify({
+      type: credential.type,
+      documentNumber: credential.documentVerification?.documentNumber,
+      issuedAt: credential.issuedAt,
+      credentialSubject: credential.credentialSubject
+    });
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+
+  calculatePDSEntitlement(credential, rule) {
+    try {
+      if (!credential.pdsDetails || !rule.pdsConfig) {
+        return 'Standard entitlement';
+      }
+
+      const cardType = credential.pdsDetails.cardType;
+      const familySize = credential.pdsDetails.familySize || 1;
+      
+      // Handle both Map and regular object formats
+      let entitlements;
+      if (rule.pdsConfig.cardTypeEntitlements instanceof Map) {
+        entitlements = rule.pdsConfig.cardTypeEntitlements.get(cardType);
+      } else {
+        entitlements = rule.pdsConfig.cardTypeEntitlements[cardType];
+      }
+
+      if (!entitlements) {
+        return 'No entitlements for this card type';
+      }
+
+      const calculatedEntitlements = {};
+      let totalValue = 0;
+
+      // Handle both Map and regular object formats for entitlements
+      const entries = entitlements instanceof Map ? entitlements.entries() : Object.entries(entitlements);
+      
+      for (const [item, config] of entries) {
+        const quantity = config.quantity * familySize;
+        const value = quantity * config.price;
+        totalValue += value;
+
+        calculatedEntitlements[item] = {
+          quantity,
+          unit: config.unit,
+          price: config.price,
+          totalPrice: value
+        };
+      }
+
+      return {
+        cardType,
+        familySize,
+        monthlyEntitlements: calculatedEntitlements,
+        totalMonthlyValue: totalValue,
+        portabilityStatus: credential.pdsDetails.portabilityStatus,
+        homeState: credential.pdsDetails.homeState,
+        currentState: credential.pdsDetails.currentState
+      };
+    } catch (error) {
+      console.error('Error calculating PDS entitlement:', error);
+      return 'Error calculating entitlements';
+    }
+  }
+
   evaluateRule(credential, rule) {
+    const warnings = [];
+    
     for (const ruleCondition of rule.rules) {
       const fieldValue = this.getNestedValue(credential, ruleCondition.field);
       const passed = this.evaluateCondition(fieldValue, ruleCondition.operator, ruleCondition.value);
       
       if (!passed) {
-        return {
-          passed: false,
-          description: ruleCondition.description
-        };
+        if (ruleCondition.severity === 'warning') {
+          warnings.push(ruleCondition.description);
+        } else {
+          return {
+            passed: false,
+            description: ruleCondition.description,
+            warnings
+          };
+        }
       }
     }
     
     return {
       passed: true,
-      description: 'All conditions met'
+      description: 'All conditions met',
+      warnings
     };
   }
 
@@ -148,6 +299,21 @@ class EligibilityService {
         return fieldValue && fieldValue.includes(expectedValue);
       case 'exists':
         return fieldValue !== undefined && fieldValue !== null;
+      case 'in_range':
+        if (Array.isArray(expectedValue) && expectedValue.length === 2) {
+          return fieldValue >= expectedValue[0] && fieldValue <= expectedValue[1];
+        }
+        return false;
+      case 'date_valid':
+        if (fieldValue) {
+          const date = new Date(fieldValue);
+          const now = new Date();
+          const daysDiff = (now - date) / (1000 * 60 * 60 * 24);
+          return daysDiff <= expectedValue;
+        }
+        return false;
+      case 'document_verified':
+        return fieldValue === 'verified';
       default:
         return false;
     }

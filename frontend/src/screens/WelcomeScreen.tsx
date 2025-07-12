@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { ScrollView } from 'react-native';
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const user = route?.params?.user;
@@ -16,49 +17,78 @@ export default function WelcomeScreen({ route, navigation }: any) {
 
         {/* Action Cards */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('Profile', { phone: user?.phone })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>📄</Text>
-            </View>
-            <Text style={styles.cardTitle}>Manage Documents</Text>
-            <Text style={styles.cardSubtitle}>Upload and manage your identity documents</Text>
-          </TouchableOpacity>
+          <React.Fragment>
+            <ScrollView 
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('Profile', { phone: user?.phone })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>📄</Text>
+                </View>
+                <Text style={styles.cardTitle}>Manage Documents</Text>
+                <Text style={styles.cardSubtitle}>Upload and manage your identity documents</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('QR', { user })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>📱</Text>
-            </View>
-            <Text style={styles.cardTitle}>QR Codes</Text>
-            <Text style={styles.cardSubtitle}>Generate and scan QR codes for documents</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('QR', { user })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>📱</Text>
+                </View>
+                <Text style={styles.cardTitle}>QR Codes</Text>
+                <Text style={styles.cardSubtitle}>Generate and scan QR codes for documents</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('Healthcare', { user })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>🏥</Text>
-            </View>
-            <Text style={styles.cardTitle}>Healthcare Services</Text>
-            <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('Healthcare', { user })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>🏥</Text>
+                </View>
+                <Text style={styles.cardTitle}>Healthcare Services</Text>
+                <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('Verification', { user })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>🔐</Text>
-            </View>
-            <Text style={styles.cardTitle}>Credential Verification</Text>
-            <Text style={styles.cardSubtitle}>Share and verify credentials using QR codes</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('Verification', { user })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>🔐</Text>
+                </View>
+                <Text style={styles.cardTitle}>Credential Verification</Text>
+                <Text style={styles.cardSubtitle}>Share and verify credentials using QR codes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ScannerTest')}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>🧪</Text>
+                </View>
+                <Text style={styles.cardTitle}>Test QR Scanner</Text>
+                <Text style={styles.cardSubtitle}>Test the new QR scanner functionality</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('QRGenerator')}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>🎯</Text>
+                </View>
+                <Text style={styles.cardTitle}>QR Code Generator</Text>
+                <Text style={styles.cardSubtitle}>Generate test QR codes for scanning</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </React.Fragment>
         </View>
 
         {/* Footer */}

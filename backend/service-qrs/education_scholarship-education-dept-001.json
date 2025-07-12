@@ -1,0 +1,16 @@
+{
+  "service": "Education Scholarship",
+  "description": "Educational Scholarship Verification",
+  "qrPayload": {
+    "serviceType": "education_scholarship",
+    "verifierId": "education-dept-001",
+    "criteria": {
+      "requiresEducationCard": true,
+      "maxScholarshipAmount": 10000,
+      "academicYear": "2024-25"
+    },
+    "nonce": 1752305896524,
+    "timestamp": "2025-07-12T07:38:16.524Z"
+  },
+  "generatedAt": "2025-07-12T07:38:16.546Z"
+}

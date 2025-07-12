@@ -276,4 +276,58 @@ class CredentialStorageService {
   }
 }
 
-export default new CredentialStorageService(); 
+export default new CredentialStorageService();
+
+// React Hook for credential storage
+import { useState, useEffect } from 'react';
+
+export const useCredentialStorage = () => {
+  const [credentials, setCredentials] = useState<StoredCredential[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCredentials();
+  }, []);
+
+  const loadCredentials = async () => {
+    try {
+      setLoading(true);
+      const allCredentials = await credentialStorageService.getAllCredentials();
+      setCredentials(allCredentials);
+    } catch (error) {
+      console.error('Error loading credentials:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addCredential = async (credential: VerifiableCredential) => {
+    try {
+      await credentialStorageService.storeCredential(credential);
+      await loadCredentials();
+    } catch (error) {
+      console.error('Error adding credential:', error);
+      throw error;
+    }
+  };
+
+  const deleteCredential = async (id: string) => {
+    try {
+      await credentialStorageService.deleteCredential(id);
+      await loadCredentials();
+    } catch (error) {
+      console.error('Error deleting credential:', error);
+      throw error;
+    }
+  };
+
+  return {
+    credentials,
+    loading,
+    addCredential,
+    deleteCredential,
+    refreshCredentials: loadCredentials
+  };
+};
+
+const credentialStorageService = new CredentialStorageService(); 

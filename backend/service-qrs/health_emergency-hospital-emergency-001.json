@@ -1,0 +1,16 @@
+{
+  "service": "Healthcare Emergency",
+  "description": "Emergency Healthcare Access",
+  "qrPayload": {
+    "serviceType": "health_emergency",
+    "verifierId": "hospital-emergency-001",
+    "criteria": {
+      "requiresHealthCard": true,
+      "maxCoverageAmount": 50000,
+      "emergencyOnly": true
+    },
+    "nonce": 1752305896489,
+    "timestamp": "2025-07-12T07:38:16.489Z"
+  },
+  "generatedAt": "2025-07-12T07:38:16.523Z"
+}

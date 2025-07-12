@@ -1,0 +1,27 @@
+{
+  "description": "Test QR Code for Scanner Verification",
+  "qrPayload": {
+    "serviceType": "pds_verification",
+    "verifierId": "test-verifier-001",
+    "criteria": {
+      "cardTypes": [
+        "APL",
+        "BPL",
+        "AAY"
+      ],
+      "requiresDocumentVerification": true,
+      "maxFamilySize": 10,
+      "portabilityEnabled": true
+    },
+    "nonce": 1752300818419,
+    "timestamp": "2025-07-12T06:13:38.419Z"
+  },
+  "generatedAt": "2025-07-12T06:13:38.571Z",
+  "instructions": [
+    "1. Open the mobile app",
+    "2. Go to Verification Center",
+    "3. Choose \"Scan QR Code\"",
+    "4. Scan this QR code",
+    "5. The app should parse the QR data and show service information"
+  ]
+}

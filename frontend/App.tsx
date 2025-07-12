@@ -7,6 +7,8 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import QRScreen from './src/screens/QRScreen';
 import HealthcareScreen from './src/screens/HealthcareScreen';
 import VerificationScreen from './src/screens/VerificationScreen';
+import SimpleScannerTest from './src/components/SimpleScannerTest';
+import QRCodeTestGenerator from './src/components/QRCodeTestGenerator';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +28,8 @@ export default function App() {
         <Stack.Screen name="QR" component={QRScreen} />
         <Stack.Screen name="Healthcare" component={HealthcareScreen} />
         <Stack.Screen name="Verification" component={VerificationScreen} />
+        <Stack.Screen name="ScannerTest" component={SimpleScannerTest} />
+        <Stack.Screen name="QRGenerator" component={QRCodeTestGenerator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,65 +1,42 @@
 const express = require('express');
 const router = express.Router();
+const VerifiableCredential = require('../models/VerifiableCredential');
 const eligibilityService = require('../services/eligibilityService');
 const crypto = require('crypto');
 
 // POST /api/verify-eligibility
 router.post('/verify-eligibility', async (req, res) => {
   try {
-    const {
-      vc,
-      service,
-      verifierId,
-      consentGiven,
-      location,
-      qrHash
-    } = req.body;
+    const { qrPayload, verifierId, location, consentGiven } = req.body;
 
-    // Validate required fields
-    if (!vc || !service || !verifierId || consentGiven === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields: vc, service, verifierId, consentGiven'
-      });
+    // 1. Parse QR payload
+    // Example: { credentialId, serviceType, nonce, ... }
+    const { credentialId, serviceType } = qrPayload;
+
+    // 2. Load credential
+    const credential = await VerifiableCredential.findById(credentialId);
+    if (!credential) {
+      return res.status(404).json({ success: false, reason: 'Credential not found' });
     }
 
-    // Check if consent was given
-    if (!consentGiven) {
-      return res.status(403).json({
-        success: false,
-        message: 'Verification denied - user consent not given'
-      });
-    }
+    const userId = credential.credentialSubject?.aadhaarNumber || credential.credentialSubject?.id || 'unknown';
 
-    // Check for QR reuse
-    if (qrHash) {
-      const isReused = await eligibilityService.checkQRReuse(qrHash);
-      if (isReused) {
-        return res.status(400).json({
-          success: false,
-          message: 'QR code has already been used'
-        });
-      }
-    }
-
-    // Extract user ID from credential (in real implementation, this would be verified)
-    const userId = vc.userId || 'mock-user-id';
-
-    // Evaluate eligibility
+    // 3. Run eligibility and document checks
     const result = await eligibilityService.evaluateEligibility(
-      vc,
-      service,
+      credential,
+      serviceType,
       userId,
       verifierId,
       location
     );
 
-    // Log the verification
+    // 4. Log the verification
+    const qrHash = qrPayload.nonce || crypto.randomBytes(16).toString('hex');
     await eligibilityService.logVerification(
       userId,
       verifierId,
-      service,
-      vc.type,
+      serviceType,
+      credential.type,
       result,
       consentGiven,
       location,
@@ -68,22 +45,84 @@ router.post('/verify-eligibility', async (req, res) => {
       req.get('User-Agent')
     );
 
-    res.json({
+    // 5. Get service details for the response
+    const serviceDetails = getServiceDetails(serviceType);
+
+    // 6. Return detailed result with service information
+    return res.json({
       success: true,
-      eligible: result.eligible,
-      entitlement: result.entitlement,
-      reason: result.reason,
+      ...result,
+      serviceDetails,
       timestamp: new Date().toISOString()
     });
-
-  } catch (error) {
-    console.error('Verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error during verification'
-    });
+  } catch (err) {
+    console.error('Eligibility verification error:', err);
+    res.status(500).json({ success: false, reason: 'Internal server error' });
   }
 });
+
+// Helper function to get service details
+function getServiceDetails(serviceType) {
+  const services = {
+    'pds_verification': {
+      name: 'PDS Verification',
+      description: 'Public Distribution System verification for ration card portability',
+      icon: '🛒',
+      benefits: [
+        'Access to subsidized food grains',
+        'Portability across states under ONORC',
+        'Monthly entitlements based on family size'
+      ]
+    },
+    'ration_portability': {
+      name: 'Ration Portability',
+      description: 'One Nation One Ration Card (ONORC) verification',
+      icon: '🆔',
+      benefits: [
+        'Access to ration benefits in any state',
+        'No need for new ration card',
+        'Seamless portability of benefits'
+      ]
+    },
+    'health_emergency': {
+      name: 'Health Emergency',
+      description: 'Emergency healthcare service verification',
+      icon: '🏥',
+      benefits: [
+        'Emergency medical treatment',
+        'Up to ₹50,000 coverage',
+        'Cashless treatment at empaneled hospitals'
+      ]
+    },
+    'education_scholarship': {
+      name: 'Education Scholarship',
+      description: 'Educational scholarship and fee reimbursement',
+      icon: '🎓',
+      benefits: [
+        'Tuition fee reimbursement',
+        'Book and uniform allowance',
+        'Transportation allowance'
+      ]
+    },
+    'skill_training': {
+      name: 'Skill Training',
+      description: 'Skill development and training programs',
+      icon: '🔧',
+      benefits: [
+        'Free skill training courses',
+        'Certification programs',
+        'Job placement assistance'
+      ]
+    }
+  };
+
+  return services[serviceType] || {
+    name: serviceType,
+    description: 'Service verification',
+    icon: '✅',
+    benefits: ['Service verification completed']
+  };
+}
 
 // GET /api/verification-history/:userId
 router.get('/verification-history/:userId', async (req, res) => {

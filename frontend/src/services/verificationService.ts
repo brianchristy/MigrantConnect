@@ -10,8 +10,8 @@ export interface QRPayload {
 }
 
 export interface VerificationRequest {
-  vc: VerifiableCredential;
-  service: string;
+  vc?: VerifiableCredential;
+  service?: string;
   verifierId: string;
   consentGiven: boolean;
   location?: {
@@ -20,14 +20,54 @@ export interface VerificationRequest {
     address?: string;
   };
   qrHash?: string;
+  qrPayload?: {
+    credentialId: string;
+    serviceType: string;
+    verifierId: string;
+    nonce: number;
+  };
+}
+
+export interface DocumentVerification {
+  isGenuine: boolean;
+  verificationStatus: string;
+  issues: string[];
+  recommendations: string[];
+}
+
+export interface PDSEntitlement {
+  cardType: string;
+  familySize: number;
+  monthlyEntitlements: {
+    [key: string]: {
+      quantity: number;
+      unit: string;
+      price: number;
+      totalPrice: number;
+    };
+  };
+  totalMonthlyValue: number;
+  portabilityStatus: string;
+  homeState: string;
+  currentState: string;
+}
+
+export interface ServiceDetails {
+  name: string;
+  description: string;
+  icon: string;
+  benefits: string[];
 }
 
 export interface VerificationResponse {
   success: boolean;
   eligible: boolean;
-  entitlement?: string;
+  entitlement?: string | PDSEntitlement;
   reason: string;
   timestamp: string;
+  documentVerification?: DocumentVerification;
+  warnings?: string[];
+  serviceDetails?: ServiceDetails;
 }
 
 export interface ServiceInfo {

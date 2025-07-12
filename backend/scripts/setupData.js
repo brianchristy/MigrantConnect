@@ -29,7 +29,7 @@ const sampleRules = [
         description: 'Last claim must be more than 30 days ago'
       }
     ],
-    cooldownPeriod: 30, // days
+    cooldownPeriod: 0, // days
     maxUsagePerMonth: 1,
     entitlement: '5kg/month',
     description: 'Ration card portability under ONORC scheme'
@@ -123,6 +123,7 @@ const sampleCredentials = [
     expiresAt: new Date('2025-12-31T23:59:59Z'),
     credentialSubject: {
       userId: 'user123',
+      aadhaarNumber: '123456789012',
       entitlement: '5kg/month',
       ONORC_enabled: true,
       last_claimed: '2024-06-15',
@@ -130,6 +131,39 @@ const sampleCredentials = [
       card_number: 'RAT123456789',
       beneficiary_name: 'Rahul Kumar',
       address: 'Patna, Bihar'
+    },
+    documentVerification: {
+      documentHash: 'sha256:abc123def456',
+      documentType: 'ration_card',
+      documentNumber: 'RAT123456789',
+      verificationStatus: 'verified',
+      verifiedBy: 'FoodDept_Bihar',
+      verifiedAt: new Date('2024-01-15T10:00:00Z'),
+      verificationNotes: 'Document verified successfully'
+    },
+    pdsDetails: {
+      cardType: 'BPL',
+      familySize: 4,
+      monthlyEntitlement: {
+        rice: 5,
+        wheat: 3,
+        sugar: 1,
+        kerosene: 2,
+        pulses: 1
+      },
+      lastPurchaseDate: new Date('2024-06-15T10:00:00Z'),
+      purchaseHistory: [
+        {
+          date: new Date('2024-06-15T10:00:00Z'),
+          items: [
+            { item: 'Rice', quantity: 5, unit: 'kg' },
+            { item: 'Wheat', quantity: 3, unit: 'kg' }
+          ]
+        }
+      ],
+      portabilityStatus: 'enabled',
+      homeState: 'Bihar',
+      currentState: 'Bihar'
     },
     status: 'active',
     proof: {
@@ -147,6 +181,7 @@ const sampleCredentials = [
     expiresAt: new Date('2025-03-20T14:30:00Z'),
     credentialSubject: {
       userId: 'user123',
+      aadhaarNumber: '123456789012',
       coverage_type: 'emergency_health',
       coverage_amount: 'Up to ₹50,000',
       valid_until: new Date('2025-03-20T14:30:00Z'),
@@ -154,6 +189,15 @@ const sampleCredentials = [
       card_number: 'HEALTH987654321',
       beneficiary_name: 'Rahul Kumar',
       emergency_contact: '+91-9876543210'
+    },
+    documentVerification: {
+      documentHash: 'sha256:def456ghi789',
+      documentType: 'aadhaar',
+      documentNumber: '123456789012',
+      verificationStatus: 'verified',
+      verifiedBy: 'HealthDept_Bihar',
+      verifiedAt: new Date('2024-03-20T14:30:00Z'),
+      verificationNotes: 'Health card verified successfully'
     },
     status: 'active',
     proof: {
@@ -171,6 +215,7 @@ const sampleCredentials = [
     expiresAt: new Date('2025-02-10T09:15:00Z'),
     credentialSubject: {
       userId: 'user123',
+      aadhaarNumber: '123456789012',
       scholarship_amount: '₹10,000/year',
       education_level: 'secondary',
       institution_type: 'government',
@@ -178,6 +223,15 @@ const sampleCredentials = [
       card_number: 'EDU456789123',
       student_name: 'Rahul Kumar',
       school_name: 'Government High School, Patna'
+    },
+    documentVerification: {
+      documentHash: 'sha256:ghi789jkl012',
+      documentType: 'aadhaar',
+      documentNumber: '123456789012',
+      verificationStatus: 'verified',
+      verifiedBy: 'EducationDept_Bihar',
+      verifiedAt: new Date('2024-02-10T09:15:00Z'),
+      verificationNotes: 'Education card verified successfully'
     },
     status: 'active',
     proof: {
@@ -195,12 +249,22 @@ const sampleCredentials = [
     expiresAt: new Date('2026-04-05T11:20:00Z'),
     credentialSubject: {
       userId: 'user123',
+      aadhaarNumber: '123456789012',
       skill_name: 'Basic Computer Skills',
       skill_level: 'basic',
       training_center: 'Bihar Skill Development Center',
       certificate_number: 'SKILL789456123',
       holder_name: 'Rahul Kumar',
       completion_date: '2024-03-15'
+    },
+    documentVerification: {
+      documentHash: 'sha256:jkl012mno345',
+      documentType: 'aadhaar',
+      documentNumber: '123456789012',
+      verificationStatus: 'verified',
+      verifiedBy: 'SkillDept_Bihar',
+      verifiedAt: new Date('2024-04-05T11:20:00Z'),
+      verificationNotes: 'Skill certificate verified successfully'
     },
     status: 'active',
     proof: {

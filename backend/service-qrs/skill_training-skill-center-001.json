@@ -1,0 +1,19 @@
+{
+  "service": "Skill Training",
+  "description": "Skill Development Training Access",
+  "qrPayload": {
+    "serviceType": "skill_training",
+    "verifierId": "skill-center-001",
+    "criteria": {
+      "requiresSkillCert": true,
+      "maxTrainingDuration": 6,
+      "ageLimit": [
+        18,
+        45
+      ]
+    },
+    "nonce": 1752305896547,
+    "timestamp": "2025-07-12T07:38:16.547Z"
+  },
+  "generatedAt": "2025-07-12T07:38:16.567Z"
+}

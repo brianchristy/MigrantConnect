@@ -1,5 +1,7 @@
 // Debug utility for API testing
 import { API_BASE_URL } from '../config/api';
+import axios from 'axios';
+import credentialStorage, { VerifiableCredential } from '../services/credentialStorage';
 
 export const debugAPICall = async () => {
   try {
@@ -60,4 +62,28 @@ export const debugAPICall = async () => {
   } catch (error) {
     console.error('API Debug Test Failed:', error);
   }
-}; 
+};
+
+const API_BASE_URL = 'http://192.168.42.54:5000/api'; // Update if needed
+
+export async function syncBackendCredentialsToFrontend(userId = 'user123') {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/user-credentials/${userId}`);
+    const backendCredentials = response.data.credentials;
+    console.log('Fetched credentials from backend:', backendCredentials);
+
+    for (const cred of backendCredentials) {
+      // Remove _id and __v fields if present
+      const { _id, __v, ...rest } = cred;
+      // Store in frontend local storage
+      await credentialStorage.storeCredential(rest as VerifiableCredential);
+    }
+    console.log('Synced backend credentials to frontend local storage.');
+  } catch (error) {
+    console.error('Error syncing backend credentials:', error);
+  }
+}
+
+// Usage (in a debug screen or console):
+// import { syncBackendCredentialsToFrontend } from '../utils/debugAPI';
+// syncBackendCredentialsToFrontend(); 

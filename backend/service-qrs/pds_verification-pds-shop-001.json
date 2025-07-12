@@ -1,0 +1,21 @@
+{
+  "service": "PDS Verification",
+  "description": "Public Distribution System - Ration Card Verification",
+  "qrPayload": {
+    "serviceType": "pds_verification",
+    "verifierId": "pds-shop-001",
+    "criteria": {
+      "cardTypes": [
+        "APL",
+        "BPL",
+        "AAY"
+      ],
+      "requiresDocumentVerification": true,
+      "maxFamilySize": 10,
+      "portabilityEnabled": true
+    },
+    "nonce": 1752305896399,
+    "timestamp": "2025-07-12T07:38:16.399Z"
+  },
+  "generatedAt": "2025-07-12T07:38:16.488Z"
+}

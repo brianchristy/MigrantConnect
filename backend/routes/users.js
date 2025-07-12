@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const VerifiableCredential = require('../models/VerifiableCredential');
 
 // Get user profile by phone (excluding password)
 router.get('/:phone', async (req, res) => {
@@ -32,6 +33,18 @@ router.put('/:phone', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
     }
+});
+
+// GET /api/user-credentials/:userId
+router.get('/user-credentials/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const credentials = await VerifiableCredential.find({ 'credentialSubject.userId': userId }).select('-__v');
+    res.json({ success: true, credentials });
+  } catch (error) {
+    console.error('Error fetching user credentials:', error);
+    res.status(500).json({ success: false, message: 'Error fetching user credentials' });
+  }
 });
 
 module.exports = router;
