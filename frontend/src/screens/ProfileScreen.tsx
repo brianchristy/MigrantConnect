@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, Alert, ActivityIndicator, Linking, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Linking, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import { getProfile, updateProfile } from '../services/auth';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
@@ -186,84 +186,426 @@ export default function ProfileScreen({ route, navigation }: any) {
   if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
 
   return (
-    <ScrollView style={{ padding: 20 }}>
-      <Text>Phone: {phone}</Text>
-      <Text>Name</Text>
-      <TextInput value={name} onChangeText={setName} style={{ borderWidth: 1, marginBottom: 10 }} />
-      <Button title="Update Profile" onPress={handleUpdate} />
-      {/* Document Upload Section */}
-      <View style={{ marginTop: 30 }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Add Documents</Text>
-        {/* Aadhaar */}
-        {getUploadedDoc('aadhaar') ? (
-          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
-            <Text>Aadhaar Number: {getUploadedDoc('aadhaar').number || '-'}</Text>
-            <Text>File: {getUploadedDoc('aadhaar').fileName}</Text>
-            <Button title="Delete Aadhaar" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('aadhaar')._id)} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Custom Navigation */}
+        <View style={styles.navBar}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.navigate('Welcome', { user: { phone } })}
+          >
+            <Text style={styles.backButtonText}>← Back to Welcome</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile & Documents</Text>
+          <Text style={styles.headerSubtitle}>Manage your identity documents</Text>
+        </View>
+
+        {/* Profile Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profile Information</Text>
+          <View style={styles.profileCard}>
+            <Text style={styles.label}>Phone: {phone}</Text>
+            <Text style={styles.label}>Name</Text>
+            <TextInput 
+              value={name} 
+              onChangeText={setName} 
+              style={styles.input}
+              placeholder="Enter your name"
+              placeholderTextColor="#999"
+            />
+            <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+              <Text style={styles.updateButtonText}>Update Profile</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <View>
-            <Text style={{ marginTop: 10 }}>Aadhaar Number</Text>
-            <TextInput value={aadhaarNumber} onChangeText={setAadhaarNumber} keyboardType="number-pad" style={{ borderWidth: 1, marginBottom: 5 }} />
-            <Button title={aadhaarFile ? `Selected: ${aadhaarFile.name}` : 'Upload Aadhaar File'} onPress={pickAadhaarFile} />
+        </View>
+
+        {/* Document Upload Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Add Documents</Text>
+          
+          {/* Aadhaar */}
+          {getUploadedDoc('aadhaar') ? (
+            <View style={styles.uploadedCard}>
+              <View style={styles.docHeader}>
+                <Text style={styles.docIcon}>🆔</Text>
+                <Text style={styles.docTitle}>Aadhaar Card</Text>
+              </View>
+              <Text style={styles.docInfo}>Number: {getUploadedDoc('aadhaar').number || '-'}</Text>
+              <Text style={styles.docInfo}>File: {getUploadedDoc('aadhaar').fileName}</Text>
+              <TouchableOpacity 
+                style={styles.deleteButton} 
+                onPress={() => handleDeleteDocument(getUploadedDoc('aadhaar')._id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.uploadCard}>
+              <Text style={styles.docIcon}>🆔</Text>
+              <Text style={styles.docTitle}>Aadhaar Card</Text>
+              <TextInput 
+                value={aadhaarNumber} 
+                onChangeText={setAadhaarNumber} 
+                keyboardType="number-pad" 
+                style={styles.input}
+                placeholder="Aadhaar number (optional)"
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity 
+                style={styles.uploadButton} 
+                onPress={pickAadhaarFile}
+              >
+                <Text style={styles.uploadButtonText}>
+                  {aadhaarFile ? `Selected: ${aadhaarFile.name}` : 'Upload Aadhaar File'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* PAN */}
+          {getUploadedDoc('pan') ? (
+            <View style={styles.uploadedCard}>
+              <View style={styles.docHeader}>
+                <Text style={styles.docIcon}>📋</Text>
+                <Text style={styles.docTitle}>PAN Card</Text>
+              </View>
+              <Text style={styles.docInfo}>Number: {getUploadedDoc('pan').number || '-'}</Text>
+              <Text style={styles.docInfo}>File: {getUploadedDoc('pan').fileName}</Text>
+              <TouchableOpacity 
+                style={styles.deleteButton} 
+                onPress={() => handleDeleteDocument(getUploadedDoc('pan')._id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.uploadCard}>
+              <Text style={styles.docIcon}>📋</Text>
+              <Text style={styles.docTitle}>PAN Card</Text>
+              <TextInput 
+                value={panNumber} 
+                onChangeText={setPanNumber} 
+                style={styles.input}
+                placeholder="PAN number (optional)"
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity 
+                style={styles.uploadButton} 
+                onPress={pickPanFile}
+              >
+                <Text style={styles.uploadButtonText}>
+                  {panFile ? `Selected: ${panFile.name}` : 'Upload PAN File'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Ration Card */}
+          {getUploadedDoc('ration') ? (
+            <View style={styles.uploadedCard}>
+              <View style={styles.docHeader}>
+                <Text style={styles.docIcon}>🍞</Text>
+                <Text style={styles.docTitle}>Ration Card</Text>
+              </View>
+              <Text style={styles.docInfo}>Number: {getUploadedDoc('ration').number || '-'}</Text>
+              <Text style={styles.docInfo}>File: {getUploadedDoc('ration').fileName}</Text>
+              <TouchableOpacity 
+                style={styles.deleteButton} 
+                onPress={() => handleDeleteDocument(getUploadedDoc('ration')._id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.uploadCard}>
+              <Text style={styles.docIcon}>🍞</Text>
+              <Text style={styles.docTitle}>Ration Card</Text>
+              <TextInput 
+                value={rationNumber} 
+                onChangeText={setRationNumber} 
+                style={styles.input}
+                placeholder="Ration card number (optional)"
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity 
+                style={styles.uploadButton} 
+                onPress={pickRationFile}
+              >
+                <Text style={styles.uploadButtonText}>
+                  {rationFile ? `Selected: ${rationFile.name}` : 'Upload Ration Card File'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Employment History */}
+          {getUploadedDoc('employment') ? (
+            <View style={styles.uploadedCard}>
+              <View style={styles.docHeader}>
+                <Text style={styles.docIcon}>💼</Text>
+                <Text style={styles.docTitle}>Employment History</Text>
+              </View>
+              <Text style={styles.docInfo}>File: {getUploadedDoc('employment').fileName}</Text>
+              <TouchableOpacity 
+                style={styles.deleteButton} 
+                onPress={() => handleDeleteDocument(getUploadedDoc('employment')._id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.uploadCard}>
+              <Text style={styles.docIcon}>💼</Text>
+              <Text style={styles.docTitle}>Employment History</Text>
+              <TouchableOpacity 
+                style={styles.uploadButton} 
+                onPress={pickEmploymentHistoryFile}
+              >
+                <Text style={styles.uploadButtonText}>
+                  {employmentHistoryFile ? `Selected: ${employmentHistoryFile.name}` : 'Upload Employment History File'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Submit Button */}
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmitDocuments}>
+            <Text style={styles.submitButtonText}>Submit Documents</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Uploaded Documents Section */}
+        {uploadedDocs.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Uploaded Documents</Text>
+            {uploadedDocs.map((doc, idx) => (
+              <View key={doc._id || idx} style={styles.downloadCard}>
+                <View style={styles.docHeader}>
+                  <Text style={styles.docIcon}>
+                    {doc.type === 'aadhaar' ? '🆔' : 
+                     doc.type === 'pan' ? '📋' : 
+                     doc.type === 'ration' ? '🍞' : '💼'}
+                  </Text>
+                  <Text style={styles.docTitle}>{doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}</Text>
+                </View>
+                <Text style={styles.docInfo}>Number: {doc.number || '-'}</Text>
+                <Text style={styles.docInfo}>File: {doc.fileName}</Text>
+                <TouchableOpacity 
+                  style={styles.downloadButton} 
+                  onPress={() => Linking.openURL(`${process.env.API_BASE_URL}/api/documents/${doc._id}/download`)}
+                >
+                  <Text style={styles.downloadButtonText}>Download</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         )}
-        {/* PAN */}
-        {getUploadedDoc('pan') ? (
-          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
-            <Text>PAN Number: {getUploadedDoc('pan').number || '-'}</Text>
-            <Text>File: {getUploadedDoc('pan').fileName}</Text>
-            <Button title="Delete PAN" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('pan')._id)} />
-          </View>
-        ) : (
-          <View>
-            <Text style={{ marginTop: 15 }}>PAN Number</Text>
-            <TextInput value={panNumber} onChangeText={setPanNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
-            <Button title={panFile ? `Selected: ${panFile.name}` : 'Upload PAN File'} onPress={pickPanFile} />
-          </View>
-        )}
-        {/* Ration Card */}
-        {getUploadedDoc('ration') ? (
-          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
-            <Text>Ration Card Number: {getUploadedDoc('ration').number || '-'}</Text>
-            <Text>File: {getUploadedDoc('ration').fileName}</Text>
-            <Button title="Delete Ration Card" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('ration')._id)} />
-          </View>
-        ) : (
-          <View>
-            <Text style={{ marginTop: 15 }}>Ration Card Number</Text>
-            <TextInput value={rationNumber} onChangeText={setRationNumber} style={{ borderWidth: 1, marginBottom: 5 }} />
-            <Button title={rationFile ? `Selected: ${rationFile.name}` : 'Upload Ration Card File'} onPress={pickRationFile} />
-          </View>
-        )}
-        {/* Employment History */}
-        {getUploadedDoc('employment') ? (
-          <View style={{ marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
-            <Text>Employment History File: {getUploadedDoc('employment').fileName}</Text>
-            <Button title="Delete Employment History" color="red" onPress={() => handleDeleteDocument(getUploadedDoc('employment')._id)} />
-          </View>
-        ) : (
-          <View>
-            <Text style={{ marginTop: 15 }}>Employment History</Text>
-            <Button title={employmentHistoryFile ? `Selected: ${employmentHistoryFile.name}` : 'Upload Employment History File'} onPress={pickEmploymentHistoryFile} />
-          </View>
-        )}
-        {/* Submit Documents Button */}
-        <Button title="Submit Documents" onPress={handleSubmitDocuments} color="#2196F3" />
-      </View>
-      {/* Uploaded Documents Section */}
-      <View style={{ marginTop: 40 }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Uploaded Documents</Text>
-        {uploadedDocs.length === 0 && <Text>No documents uploaded yet.</Text>}
-        {uploadedDocs.map((doc, idx) => (
-          <View key={doc._id || idx} style={{ marginBottom: 15, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 }}>
-            <Text>Type: {doc.type}</Text>
-            <Text>Number: {doc.number || '-'}</Text>
-            <Text>File: {doc.fileName}</Text>
-            <Button title="Download" onPress={() => Linking.openURL(`${process.env.API_BASE_URL}/api/documents/${doc._id}/download`)} />
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  navBar: {
+    paddingTop: 40, // Reduced padding for better positioning
+    paddingBottom: 10,
+    alignItems: 'flex-start',
+  },
+  backButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#3498db',
+    fontWeight: '600',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10, // Add some spacing from nav bar
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#7f8c8d',
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 16,
+  },
+  profileCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  input: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e1e8ed',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#2c3e50',
+    marginBottom: 12,
+  },
+  updateButton: {
+    backgroundColor: '#3498db',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  updateButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  uploadCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  uploadedCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  docHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  docIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  docTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  docInfo: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginBottom: 4,
+  },
+  uploadButton: {
+    backgroundColor: '#27ae60',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 12,
+  },
+  uploadButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  deleteButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: '#9b59b6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginTop: 20,
+    shadowColor: '#9b59b6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  downloadCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  downloadButton: {
+    backgroundColor: '#f39c12',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  downloadButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+}); 
