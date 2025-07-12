@@ -317,7 +317,7 @@ export default function HealthcareScreen({ route, navigation }: any) {
                 <Text style={styles.serviceAddress}>{service.address}</Text>
                 <View style={styles.serviceFooter}>
                   <Text style={styles.serviceType}>
-                    {service.types?.[0]?.charAt(0).toUpperCase() + service.types?.[0]?.slice(1) || t.healthcare.healthcare}
+                    {service.types?.[0] ? (service.types[0].charAt(0).toUpperCase() + service.types[0].slice(1)) : t.healthcare.healthcare}
                   </Text>
                   {service.rating && (
                     <Text style={styles.serviceRating}>⭐ {service.rating}</Text>
@@ -541,34 +541,7 @@ const styles = StyleSheet.create({
     top: -8,
     marginLeft: -10,
   },
-  distanceButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  distanceButton: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 2,
-    borderColor: '#e1e8ed',
-    minWidth: 60,
-    alignItems: 'center',
-  },
-  distanceButtonActive: {
-    backgroundColor: '#27ae60',
-    borderColor: '#27ae60',
-  },
-  distanceButtonText: {
-    fontSize: 12,
-    color: '#2c3e50',
-    fontWeight: '600',
-  },
-  distanceButtonTextActive: {
-    color: '#ffffff',
-  },
+
   resultsCount: {
     alignItems: 'center',
     paddingTop: 12,
@@ -602,63 +575,7 @@ const styles = StyleSheet.create({
   activeToggleText: {
     color: '#ffffff',
   },
-  servicesList: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  serviceCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  serviceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  serviceIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  serviceInfo: {
-    flex: 1,
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 2,
-  },
-  serviceAddress: {
-    fontSize: 14,
-    color: '#7f8c8d',
-  },
-  serviceDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  serviceDistance: {
-    fontSize: 14,
-    color: '#27ae60',
-    fontWeight: '600',
-  },
-  serviceRating: {
-    fontSize: 14,
-    color: '#f39c12',
-    fontWeight: '600',
-  },
-  serviceType: {
-    fontSize: 14,
-    color: '#3498db',
-    fontWeight: '600',
-  },
+
   mapContainer: {
     flex: 1,
     marginHorizontal: 20,
