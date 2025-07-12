@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   aadhaar: { type: String, sparse: true, unique: true },
   password: { type: String, required: true },
   language: { type: String, default: 'en' },
+  role: { type: String, enum: ['migrant', 'requester'], default: 'migrant' },
   createdAt: { type: Date, default: Date.now }
 });
 

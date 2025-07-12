@@ -67,13 +67,88 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Download document
-router.get('/:id/download', async (req, res) => {
+// Download document with role-based access
+router.get('/:docId/download', async (req, res) => {
   try {
-    const doc = await Document.findById(req.params.id);
+    const { docId } = req.params;
+    const { role } = req.query; // Get role from query parameter
+    
+    const doc = await Document.findById(docId);
     if (!doc) return res.status(404).json({ error: 'Document not found' });
+    
+    if (!fs.existsSync(doc.filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // For requesters, redirect directly to file download
+    if (role === 'requester') {
+      res.redirect(`http://192.168.214.237:5000/api/documents/${docId}/file`);
+    } else {
+      // For migrants, allow direct download
+      res.download(doc.filePath, doc.fileName);
+    }
+  } catch (err) {
+    console.error('Document download error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Simple file download endpoint
+router.get('/:docId/file', async (req, res) => {
+  try {
+    const { docId } = req.params;
+    const doc = await Document.findById(docId);
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    
+    if (!fs.existsSync(doc.filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
     res.download(doc.filePath, doc.fileName);
   } catch (err) {
+    console.error('Document file error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Secure document viewing for requesters (with screenshot prevention)
+router.get('/view/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const tokenData = downloadTokens[token];
+    
+    if (!tokenData || new Date() > tokenData.expiresAt) {
+      delete downloadTokens[token];
+      return res.status(401).json({ error: 'Access expired or invalid' });
+    }
+    
+    const doc = await Document.findById(tokenData.docId);
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    
+    if (!fs.existsSync(doc.filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Set headers to prevent screenshots and downloads
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Send the file
+    const fileStream = fs.createReadStream(doc.filePath);
+    fileStream.pipe(res);
+    
+    // Clean up token after sending
+    setTimeout(() => {
+      delete downloadTokens[token];
+    }, 5000); // Clean up after 5 seconds
+    
+  } catch (err) {
+    console.error('Document view error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

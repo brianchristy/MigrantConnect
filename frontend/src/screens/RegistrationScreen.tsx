@@ -9,7 +9,9 @@ export default function RegistrationScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const [selectedRole, setSelectedRole] = useState<'migrant' | 'requester'>('migrant');
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -17,7 +19,7 @@ export default function RegistrationScreen({ navigation }: any) {
       return;
     }
     try {
-      await registerUser({ name, phone, password, language: selectedLanguage });
+      await registerUser({ name, phone, password, language: selectedLanguage, role: selectedRole });
       Alert.alert('Success', 'Registration successful!');
       if (navigation) navigation.navigate('Login');
     } catch (err: any) {
@@ -28,6 +30,11 @@ export default function RegistrationScreen({ navigation }: any) {
   const handleLanguageSelect = async (language: Language) => {
     setSelectedLanguage(language);
     setShowLanguageSelection(false);
+  };
+
+  const handleRoleSelect = (role: 'migrant' | 'requester') => {
+    setSelectedRole(role);
+    setShowRoleSelection(false);
   };
 
   return (
@@ -93,6 +100,18 @@ export default function RegistrationScreen({ navigation }: any) {
               <Text style={styles.languageArrow}>▼</Text>
             </TouchableOpacity>
 
+            {/* Role Selection */}
+            <Text style={styles.label}>Role</Text>
+            <TouchableOpacity 
+              style={styles.roleButton} 
+              onPress={() => setShowRoleSelection(true)}
+            >
+              <Text style={styles.roleButtonText}>
+                {selectedRole === 'migrant' ? 'Migrant' : 'Requester'}
+              </Text>
+              <Text style={styles.roleArrow}>▼</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
               <Text style={styles.registerButtonText}>Register</Text>
             </TouchableOpacity>
@@ -145,6 +164,62 @@ export default function RegistrationScreen({ navigation }: any) {
                   )}
                 </TouchableOpacity>
               ))}
+            </ScrollView>
+          </View>
+    </View>
+      </Modal>
+
+      {/* Role Selection Modal */}
+      <Modal
+        visible={showRoleSelection}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowRoleSelection(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Role</Text>
+              <TouchableOpacity onPress={() => setShowRoleSelection(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalBody}>
+              <TouchableOpacity
+                style={[
+                  styles.roleOption,
+                  selectedRole === 'migrant' && styles.roleOptionSelected
+                ]}
+                onPress={() => handleRoleSelect('migrant')}
+              >
+                <Text style={[
+                  styles.roleOptionText,
+                  selectedRole === 'migrant' && styles.roleOptionTextSelected
+                ]}>
+                  Migrant
+                </Text>
+                {selectedRole === 'migrant' && (
+                  <Text style={styles.roleOptionCheck}>✓</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.roleOption,
+                  selectedRole === 'requester' && styles.roleOptionSelected
+                ]}
+                onPress={() => handleRoleSelect('requester')}
+              >
+                <Text style={[
+                  styles.roleOptionText,
+                  selectedRole === 'requester' && styles.roleOptionTextSelected
+                ]}>
+                  Requester
+                </Text>
+                {selectedRole === 'requester' && (
+                  <Text style={styles.roleOptionCheck}>✓</Text>
+                )}
+              </TouchableOpacity>
             </ScrollView>
           </View>
     </View>
@@ -264,6 +339,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7f8c8d',
   },
+  roleButton: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e1e8ed',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  roleButtonText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
+  },
+  roleArrow: {
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -324,6 +424,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   languageOptionCheck: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  roleOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  roleOptionSelected: {
+    backgroundColor: '#3498db',
+  },
+  roleOptionText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
+  },
+  roleOptionTextSelected: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  roleOptionCheck: {
     fontSize: 18,
     color: '#ffffff',
     fontWeight: 'bold',

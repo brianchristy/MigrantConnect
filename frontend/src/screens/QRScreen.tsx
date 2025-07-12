@@ -16,7 +16,7 @@ export default function QRScreen({ route, navigation }: any) {
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([]);
 
   useEffect(() => {
-    if (user?.phone) {
+    if (user?.phone && user?.role === 'migrant') {
       fetchDocuments(user.phone);
     }
   }, [user]);
@@ -44,8 +44,9 @@ export default function QRScreen({ route, navigation }: any) {
       parsed = JSON.parse(result.data);
     } catch (e) {}
 
-    // If the QR contains a download link, open it directly
+    // If the QR contains a download link, handle based on user role
     if (parsed && parsed.download) {
+      // For both roles, directly open the download URL
       Linking.openURL(parsed.download);
     } else if (typeof result.data === 'string' && result.data.startsWith('http')) {
       Linking.openURL(result.data);
@@ -69,84 +70,105 @@ export default function QRScreen({ route, navigation }: any) {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t.qr.title}</Text>
-          <Text style={styles.headerSubtitle}>{t.qr.subtitle}</Text>
+          <Text style={styles.headerTitle}>
+            {user?.role === 'migrant' ? 'Show QR Codes' : 'Scan QR Codes'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {user?.role === 'migrant' ? 'Generate QR codes for your documents' : 'Scan QR codes to view migrant documents'}
+          </Text>
         </View>
 
-        {/* Available Documents */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.qr.availableDocuments}</Text>
-          {uploadedDocs.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📄</Text>
-              <Text style={styles.emptyTitle}>{t.qr.noDocuments}</Text>
-              <Text style={styles.emptySubtitle}>{t.qr.uploadDocumentsHint}</Text>
+        {user?.role === 'migrant' ? (
+          // Migrant view - can generate QR codes
+          <>
+            {/* Available Documents */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t.qr.availableDocuments}</Text>
+              {uploadedDocs.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyIcon}>📄</Text>
+                  <Text style={styles.emptyTitle}>{t.qr.noDocuments}</Text>
+                  <Text style={styles.emptySubtitle}>{t.qr.uploadDocumentsHint}</Text>
+                </View>
+              ) : (
+                <View style={styles.documentsGrid}>
+                  {uploadedDocs.map((doc, idx) => (
+                    <TouchableOpacity
+                      key={doc._id || idx}
+                      style={[
+                        styles.documentCard,
+                        selectedDoc?._id === doc._id && styles.selectedCard
+                      ]}
+                      onPress={() => setSelectedDoc(doc)}
+                    >
+                      <Text style={styles.docIcon}>
+                        {doc.type === 'aadhaar' ? '🆔' : 
+                         doc.type === 'pan' ? '📋' : 
+                         doc.type === 'ration' ? '🍞' : '💼'}
+                      </Text>
+                      <Text style={styles.docTitle}>{doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}</Text>
+                      <Text style={styles.docFileName}>{doc.fileName}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
-          ) : (
-            <View style={styles.documentsGrid}>
-              {uploadedDocs.map((doc, idx) => (
-                <TouchableOpacity
-                  key={doc._id || idx}
-                  style={[
-                    styles.documentCard,
-                    selectedDoc?._id === doc._id && styles.selectedCard
-                  ]}
-                  onPress={() => setSelectedDoc(doc)}
-                >
-                  <Text style={styles.docIcon}>
-                    {doc.type === 'aadhaar' ? '🆔' : 
-                     doc.type === 'pan' ? '📋' : 
-                     doc.type === 'ration' ? '🍞' : '💼'}
+
+            {/* QR Code Display */}
+            {selectedDoc && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{t.qr.qrCode}</Text>
+                <View style={styles.qrContainer}>
+                  <Text style={styles.qrTitle}>
+                    {selectedDoc.type.charAt(0).toUpperCase() + selectedDoc.type.slice(1)} {t.qr.document}
                   </Text>
-                  <Text style={styles.docTitle}>{doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}</Text>
-                  <Text style={styles.docFileName}>{doc.fileName}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* QR Code Display */}
-        {selectedDoc && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.qr.qrCode}</Text>
-            <View style={styles.qrContainer}>
-              <Text style={styles.qrTitle}>
-                {selectedDoc.type.charAt(0).toUpperCase() + selectedDoc.type.slice(1)} {t.qr.document}
-              </Text>
-              <View style={styles.qrWrapper}>
-                <QRCode value={JSON.stringify({ download: `${API_BASE_URL}/api/documents/${selectedDoc._id}/download` })} />
+                  <View style={styles.qrWrapper}>
+                    <QRCode value={JSON.stringify({ 
+                      download: `${API_BASE_URL}/api/documents/${selectedDoc._id}/download?role=requester` 
+                    })} />
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.hideButton} 
+                    onPress={() => setSelectedDoc(null)}
+                  >
+                    <Text style={styles.hideButtonText}>{t.qr.hideQrCode}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity 
-                style={styles.hideButton} 
-                onPress={() => setSelectedDoc(null)}
-              >
-                <Text style={styles.hideButtonText}>{t.qr.hideQrCode}</Text>
-              </TouchableOpacity>
-            </View>
+            )}
+          </>
+        ) : (
+          // Requester view - only scanning
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Scan QR Code</Text>
+            <Text style={styles.scanDescription}>
+              Scan a QR code to view migrant documents. You will have 2 minutes to view the document.
+            </Text>
           </View>
         )}
 
-        {/* Scanner Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.qr.scanQrCode}</Text>
-          <TouchableOpacity style={styles.scanButton} onPress={handleRequestPermission}>
-            <Text style={styles.scanButtonText}>{t.qr.openScanner}</Text>
-          </TouchableOpacity>
-          
-          {showScanner && permission?.granted && (
-            <View style={styles.scannerContainer}>
-              <CameraView
-                style={styles.camera}
-                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-                onBarcodeScanned={handleBarCodeScanned}
-              />
-            </View>
-          )}
-        </View>
+        {/* Scanner Section - Only for requesters */}
+        {user?.role === 'requester' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Scan QR Code</Text>
+            <TouchableOpacity style={styles.scanButton} onPress={handleRequestPermission}>
+              <Text style={styles.scanButtonText}>Open Scanner</Text>
+            </TouchableOpacity>
+            
+      {showScanner && permission?.granted && (
+              <View style={styles.scannerContainer}>
+        <CameraView
+                  style={styles.camera}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={handleBarCodeScanned}
+        />
+              </View>
+            )}
+          </View>
+      )}
 
         {/* Scanned Data Display */}
-        {scannedData && (
+      {scannedData && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.qr.scannedData}</Text>
             <View style={styles.scannedDataCard}>
@@ -174,7 +196,7 @@ export default function QRScreen({ route, navigation }: any) {
                 );
               })()}
             </View>
-          </View>
+    </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -387,5 +409,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2c3e50',
     marginBottom: 8,
+  },
+  scanDescription: {
+    fontSize: 16,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginTop: 10,
   },
 }); 

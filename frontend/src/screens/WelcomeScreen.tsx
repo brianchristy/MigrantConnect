@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ScrollView } from 'react-native';
 import { useLanguage } from '../i18n/LanguageContext';
 import { languageNames, Language } from '../i18n';
+import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const { translations: t, changeLanguage, currentLanguage } = useLanguage();
@@ -11,6 +13,12 @@ export default function WelcomeScreen({ route, navigation }: any) {
   const handleLanguageSelect = async (language: Language) => {
     try {
       await changeLanguage(language);
+      
+      // Save language preference to user's profile in database
+      if (user?.phone) {
+        await axios.put(`${API_BASE_URL}/api/users/${user.phone}`, { language });
+      }
+      
       setShowLanguageModal(false);
     } catch (error) {
       console.error('Error changing language:', error);
@@ -44,38 +52,55 @@ export default function WelcomeScreen({ route, navigation }: any) {
 
         {/* Action Cards */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('Profile', { phone: user?.phone })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>📄</Text>
-            </View>
-            <Text style={styles.cardTitle}>{t.welcome.profileButton}</Text>
-            <Text style={styles.cardSubtitle}>Manage your identity documents and profile information</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('QR', { user })}
-          >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>📱</Text>
-            </View>
-            <Text style={styles.cardTitle}>{t.welcome.qrButton}</Text>
-            <Text style={styles.cardSubtitle}>Generate and scan QR codes for your documents</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('Healthcare', { user })}
+          {user?.role === 'requester' ? (
+            // Requester options - only QR scanning
+            <TouchableOpacity 
+              style={styles.actionCard} 
+              onPress={() => navigation.navigate('QR', { user })}
             >
-            <View style={styles.cardIcon}>
-              <Text style={styles.iconText}>🏥</Text>
-            </View>
-            <Text style={styles.cardTitle}>{t.welcome.healthcareButton}</Text>
-            <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
-          </TouchableOpacity>
+              <View style={styles.cardIcon}>
+                <Text style={styles.iconText}>📱</Text>
+              </View>
+              <Text style={styles.cardTitle}>Scan QR Codes</Text>
+              <Text style={styles.cardSubtitle}>Scan QR codes to view migrant documents</Text>
+            </TouchableOpacity>
+          ) : (
+            // Migrant options - all features
+            <>
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('Profile', { phone: user?.phone })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>📄</Text>
+                </View>
+                <Text style={styles.cardTitle}>{t.welcome.profileButton}</Text>
+                <Text style={styles.cardSubtitle}>Manage your identity documents and profile information</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('QR', { user })}
+              >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>📱</Text>
+                </View>
+                <Text style={styles.cardTitle}>{t.welcome.qrButton}</Text>
+                <Text style={styles.cardSubtitle}>Generate and scan QR codes for your documents</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('Healthcare', { user })}
+                >
+                <View style={styles.cardIcon}>
+                  <Text style={styles.iconText}>🏥</Text>
+                </View>
+                <Text style={styles.cardTitle}>{t.welcome.healthcareButton}</Text>
+                <Text style={styles.cardSubtitle}>Find nearby hospitals, clinics, and pharmacies</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Footer */}
@@ -117,7 +142,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
                     currentLanguage === code && styles.languageOptionTextSelected
                   ]}>
                     {name}
-                  </Text>
+      </Text>
                   {currentLanguage === code && (
                     <Text style={styles.languageOptionCheck}>✓</Text>
                   )}
@@ -125,7 +150,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
               ))}
             </View>
           </View>
-        </View>
+    </View>
       </Modal>
     </SafeAreaView>
   );
