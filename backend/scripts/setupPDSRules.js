@@ -99,8 +99,8 @@ async function setupPDSRules() {
             maxVerificationAge: 90
           }
         },
-        cooldownPeriod: 1, // 1 day cooldown
-        maxUsagePerMonth: 30, // 30 verifications per month
+        cooldownPeriod: 0, // No cooldown
+        maxUsagePerMonth: -1, // Unlimited verifications per month
         entitlement: 'PDS Monthly Entitlements',
         description: 'PDS verification with document genuineness check and entitlement calculation',
         isActive: true,

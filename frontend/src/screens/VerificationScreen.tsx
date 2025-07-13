@@ -12,19 +12,15 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ServiceQRDisplay from '../components/ServiceQRDisplay';
 import QRScannerVerifier from '../components/QRScannerVerifier';
 import ServiceQRScanner from '../components/ServiceQRScanner';
-import ServiceQRTest from '../components/ServiceQRTest';
 import CredentialSelector from '../components/CredentialSelector';
 import EligibilityResultDisplay from '../components/EligibilityResultDisplay';
-import MinimalScannerTest from '../components/MinimalScannerTest';
 import CredentialVerificationScanner from '../components/CredentialVerificationScanner';
-import CredentialQRTest from '../components/CredentialQRTest';
-import QRTypeDetector from '../components/QRTypeDetector';
 import ServiceVerificationPopup from '../components/ServiceVerificationPopup';
 import SimpleCredentialSelector from '../components/SimpleCredentialSelector';
 import { useCredentialStorage, VerifiableCredential } from '../services/credentialStorage';
 import verificationService, { VerificationResponse } from '../services/verificationService';
 
-type VerificationMode = 'menu' | 'generate' | 'scan' | 'result' | 'test' | 'credential-verify' | 'credential-test' | 'qr-detector' | 'service-test';
+type VerificationMode = 'menu' | 'generate' | 'scan' | 'result' | 'credential-verify';
 
 const VerificationScreen: React.FC = () => {
   const [mode, setMode] = useState<VerificationMode>('menu');
@@ -36,9 +32,6 @@ const VerificationScreen: React.FC = () => {
 
   const handleServiceQRScan = async (qrData: string) => {
     try {
-      console.log('=== VERIFICATION SCREEN: QR Data received ===');
-      console.log('QR Data:', qrData);
-      console.log('Current mode:', mode);
       
       // Try to parse as JSON first
       let qrPayload;
@@ -338,69 +331,7 @@ const VerificationScreen: React.FC = () => {
           <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => setMode('test')}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: '#9B59B6' }]}>
-            <MaterialIcons name="bug-report" size={32} color="white" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Test Scanner</Text>
-            <Text style={styles.menuDescription}>
-              Test basic QR scanner functionality
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => setMode('credential-test')}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: '#E67E22' }]}>
-            <MaterialIcons name="qr-code-2" size={32} color="white" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Test Credential QR</Text>
-            <Text style={styles.menuDescription}>
-              Test credential QR scanning and verification
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => setMode('qr-detector')}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: '#8E44AD' }]}>
-            <MaterialIcons name="search" size={32} color="white" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>QR Type Detector</Text>
-            <Text style={styles.menuDescription}>
-              Identify what type of QR code you have
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => setMode('service-test')}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: '#FF6B35' }]}>
-            <MaterialIcons name="storefront" size={32} color="white" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Test Service QR</Text>
-            <Text style={styles.menuDescription}>
-              Test service QR scanning functionality
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
 
         <View style={styles.infoCard}>
           <MaterialIcons name="info" size={24} color="#007AFF" />
@@ -429,10 +360,6 @@ const VerificationScreen: React.FC = () => {
   );
 
   const renderScanMode = () => {
-    console.log('=== RENDER SCAN MODE ===');
-    console.log('scannedQRData:', scannedQRData);
-    console.log('selectedCredential:', selectedCredential);
-    console.log('mode:', mode);
     
     // If we have scanned QR data but no selected credential, show credential selection
     if (scannedQRData && !selectedCredential) {
@@ -511,39 +438,12 @@ const VerificationScreen: React.FC = () => {
     />
   );
 
-  const renderTestMode = () => (
-    <View style={styles.container}>
-      <View style={styles.scanHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setMode('menu')}
-        >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
-          <Text style={styles.backButtonText}>Back to Menu</Text>
-        </TouchableOpacity>
-      </View>
-      <MinimalScannerTest />
-    </View>
-  );
-
   const renderCredentialVerifyMode = () => (
     <CredentialVerificationScanner
       onVerificationComplete={handleCredentialVerificationComplete}
       onClose={() => setMode('menu')}
       verifierId="mobile-app-verifier"
     />
-  );
-
-  const renderCredentialTestMode = () => (
-    <CredentialQRTest />
-  );
-
-  const renderQRDetectorMode = () => (
-    <QRTypeDetector />
-  );
-
-  const renderServiceTestMode = () => (
-    <ServiceQRTest />
   );
 
   const renderContent = () => {
@@ -554,16 +454,8 @@ const VerificationScreen: React.FC = () => {
         return renderScanMode();
       case 'result':
         return renderResultMode();
-      case 'test':
-        return renderTestMode();
       case 'credential-verify':
         return renderCredentialVerifyMode();
-      case 'credential-test':
-        return renderCredentialTestMode();
-      case 'qr-detector':
-        return renderQRDetectorMode();
-      case 'service-test':
-        return renderServiceTestMode();
       default:
         return renderMenu();
     }
